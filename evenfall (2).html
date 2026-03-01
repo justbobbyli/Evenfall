@@ -1,0 +1,2312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EVENFALL // Conflict Intelligence Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;500;600;700;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #000000;
+    --bg-secondary: #080808;
+    --bg-card: #0e0e0e;
+    --bg-card-hover: #141414;
+    --border: #1c1c1c;
+    --border-bright: #2a2a2a;
+    --text-primary: #d0dce8;
+    --text-secondary: #6e8096;
+    --text-dim: #333f4d;
+    --accent-blue: #1e7fcb;
+    --accent-blue-bright: #2d9de8;
+    --accent-amber: #d4890a;
+    --accent-amber-bright: #f0a020;
+    --accent-red: #c0392b;
+    --accent-red-bright: #e74c3c;
+    --accent-green: #1a7a4a;
+    --accent-green-bright: #27ae60;
+    --accent-purple: #6c3483;
+    --accent-orange: #e8600a;
+    --accent-orange-bright: #ff7a1a;
+    --confirmed: #27ae60;
+    --unconfirmed: #d4890a;
+    --signal: #e74c3c;
+    --mono: 'Share Tech Mono', monospace;
+    --sans: 'Barlow Condensed', sans-serif;
+    --body: 'Barlow', sans-serif;
+    --daily-cap: 5.00;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--body);
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── AUTH SCREEN ── */
+  #auth-screen {
+    position: fixed; inset: 0;
+    background: var(--bg-primary);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .auth-logo {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 48px;
+    letter-spacing: 12px;
+    color: var(--accent-orange-bright);
+    text-transform: uppercase;
+    position: relative;
+  }
+
+  .auth-logo::after {
+    content: 'CONFLICT INTELLIGENCE MONITOR';
+    display: block;
+    font-size: 11px;
+    letter-spacing: 6px;
+    color: var(--text-dim);
+    font-weight: 400;
+    text-align: center;
+    margin-top: 6px;
+  }
+
+  .auth-divider {
+    width: 200px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-bright), transparent);
+  }
+
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    width: 320px;
+  }
+
+  .auth-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    align-self: flex-start;
+  }
+
+  .auth-input {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+    letter-spacing: 2px;
+  }
+
+  .auth-input:focus { border-color: var(--accent-blue); }
+
+  .auth-btn {
+    width: 100%;
+    background: var(--accent-blue);
+    border: none;
+    color: white;
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    padding: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 4px;
+  }
+
+  .auth-btn:hover { background: var(--accent-blue-bright); }
+
+  .auth-error {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent-red-bright);
+    letter-spacing: 1px;
+    display: none;
+  }
+
+  /* ── MAIN APP ── */
+  #app { display: none; }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .brand {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 17px;
+    letter-spacing: 5px;
+    color: var(--accent-orange-bright);
+    text-transform: uppercase;
+  }
+
+  .brand span {
+    color: var(--accent-orange-bright);
+  }
+
+  .conflict-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--accent-red-bright);
+    background: rgba(192,57,43,0.12);
+    border: 1px solid rgba(192,57,43,0.3);
+    padding: 3px 8px;
+    text-transform: uppercase;
+    animation: pulse-red 2s infinite;
+  }
+
+  @keyframes pulse-red {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .spend-tracker {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .spend-amount {
+    color: var(--accent-amber-bright);
+    font-weight: bold;
+  }
+
+  .spend-bar {
+    width: 80px;
+    height: 3px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .spend-fill {
+    height: 100%;
+    background: var(--accent-amber);
+    transition: width 0.5s;
+    width: 0%;
+  }
+
+  .utc-clock {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+  }
+
+  .refresh-all-btn {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    background: transparent;
+    border: 1px solid var(--accent-blue);
+    color: var(--accent-blue);
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .refresh-all-btn:hover {
+    background: var(--accent-blue);
+    color: white;
+  }
+
+  .refresh-all-btn:disabled {
+    border-color: var(--border);
+    color: var(--text-dim);
+    cursor: not-allowed;
+  }
+
+  /* ── API KEY BANNER ── */
+  #api-banner {
+    background: rgba(212,137,10,0.08);
+    border-bottom: 1px solid rgba(212,137,10,0.3);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #api-banner label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--accent-amber-bright);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  #api-key-input {
+    flex: 1;
+    max-width: 440px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 12px;
+    outline: none;
+    letter-spacing: 1px;
+    -webkit-text-security: disc;
+  }
+
+  #api-key-input:hover, #api-key-input:focus {
+    -webkit-text-security: none;
+    border-color: var(--accent-amber);
+  }
+
+  #save-key-btn {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: var(--accent-amber);
+    border: none;
+    color: black;
+    padding: 7px 16px;
+    cursor: pointer;
+  }
+
+  #api-status {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent-green-bright);
+    letter-spacing: 1px;
+  }
+
+  /* ── DAILY CAP WARNING ── */
+  #cap-warning {
+    display: none;
+    background: rgba(192,57,43,0.12);
+    border-bottom: 1px solid rgba(192,57,43,0.4);
+    padding: 10px 20px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent-red-bright);
+    letter-spacing: 1px;
+    text-align: center;
+  }
+
+  /* ── LAYOUT ── */
+  .main-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    grid-template-rows: auto;
+    gap: 0;
+    min-height: calc(100vh - 48px);
+  }
+
+  .left-column {
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .right-column {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── SECTION HEADERS ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+  }
+
+  .section-title {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+  }
+
+  .section-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .last-updated {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .refresh-btn {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 1px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  .refresh-btn:hover {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+  }
+
+  .refresh-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .cooldown-text {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+  }
+
+  /* ── LOADING STATE ── */
+  .loading-indicator {
+    display: none;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent-blue);
+    letter-spacing: 2px;
+    animation: blink 1s infinite;
+    padding: 20px 16px;
+    text-align: center;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .section-content {
+    padding: 14px 16px;
+    min-height: 80px;
+  }
+
+  .empty-state {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-align: center;
+    padding: 20px;
+  }
+
+  /* ── HEADLINE TICKER ── */
+  #headline-section {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .headline-list {
+    list-style: none;
+  }
+
+  .headline-item {
+    padding: 9px 16px;
+    border-bottom: 1px solid rgba(30,45,61,0.5);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    transition: background 0.15s;
+  }
+
+  .headline-item:hover { background: var(--bg-card-hover); }
+  .headline-item:last-child { border-bottom: none; }
+
+  .headline-badge {
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 1px;
+    padding: 2px 6px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .badge-confirmed {
+    background: rgba(39,174,96,0.15);
+    border: 1px solid rgba(39,174,96,0.4);
+    color: var(--confirmed);
+  }
+
+  .badge-unconfirmed {
+    background: rgba(212,137,10,0.15);
+    border: 1px solid rgba(212,137,10,0.4);
+    color: var(--unconfirmed);
+  }
+
+  .badge-signal {
+    background: rgba(231,76,60,0.15);
+    border: 1px solid rgba(231,76,60,0.4);
+    color: var(--signal);
+    animation: pulse-red 1.5s infinite;
+  }
+
+  .headline-time {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .headline-text {
+    font-size: 12px;
+    color: var(--text-primary);
+    line-height: 1.4;
+    flex: 1;
+  }
+
+  /* ── ESCALATION METER ── */
+  .escalation-bar-container {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-card);
+  }
+
+  .escalation-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .escalation-level-text {
+    color: var(--accent-red-bright);
+    font-weight: bold;
+  }
+
+  .escalation-track {
+    width: 100%;
+    height: 6px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .escalation-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #27ae60, #d4890a, #e74c3c);
+    transition: width 1s ease;
+    width: 0%;
+  }
+
+  .escalation-markers {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    font-family: var(--mono);
+    font-size: 8px;
+    color: var(--text-dim);
+  }
+
+  /* ── ACTOR CARDS ── */
+  .actors-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .actor-card {
+    background: var(--bg-card);
+    padding: 12px 14px;
+  }
+
+  .actor-name {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+
+  .actor-role {
+    font-family: var(--mono);
+    font-size: 8px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .actor-posture {
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 3px 7px;
+    display: inline-block;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .posture-offensive { background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.4); color: var(--accent-red-bright); }
+  .posture-defensive { background: rgba(26,122,74,0.15); border: 1px solid rgba(26,122,74,0.4); color: var(--accent-green-bright); }
+  .posture-retaliating { background: rgba(212,137,10,0.15); border: 1px solid rgba(212,137,10,0.4); color: var(--accent-amber-bright); }
+  .posture-monitoring { background: rgba(30,127,203,0.15); border: 1px solid rgba(30,127,203,0.4); color: var(--accent-blue-bright); }
+  .posture-unknown { background: rgba(61,81,102,0.3); border: 1px solid var(--border); color: var(--text-dim); }
+
+  .actor-last-action {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin-bottom: 6px;
+  }
+
+  .actor-label {
+    font-family: var(--mono);
+    font-size: 8px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+
+  /* ── MILITARY SECTION ── */
+  .military-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .military-card {
+    background: var(--bg-card);
+    padding: 12px 14px;
+  }
+
+  .military-card-title {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .strike-item {
+    display: flex;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(30,45,61,0.4);
+    align-items: flex-start;
+  }
+
+  .strike-item:last-child { border-bottom: none; }
+
+  .strike-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  .dot-red { background: var(--accent-red-bright); }
+  .dot-amber { background: var(--accent-amber-bright); }
+  .dot-blue { background: var(--accent-blue-bright); }
+  .dot-green { background: var(--accent-green-bright); }
+
+  .strike-text { font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
+  .strike-text strong { color: var(--text-primary); font-weight: 500; }
+
+  /* ── PROXY SECTION ── */
+  .proxy-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .proxy-card {
+    background: var(--bg-card);
+    padding: 12px 14px;
+  }
+
+  .proxy-name {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .proxy-status-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+  }
+
+  .proxy-activity {
+    font-family: var(--mono);
+    font-size: 8px;
+    padding: 2px 6px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .activity-high { background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.4); color: var(--accent-red-bright); }
+  .activity-medium { background: rgba(212,137,10,0.15); border: 1px solid rgba(212,137,10,0.4); color: var(--accent-amber-bright); }
+  .activity-low { background: rgba(26,122,74,0.15); border: 1px solid rgba(26,122,74,0.4); color: var(--accent-green-bright); }
+  .activity-unknown { background: rgba(61,81,102,0.3); border: 1px solid var(--border); color: var(--text-dim); }
+
+  .proxy-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
+
+  /* ── GAME THEORY ── */
+  #game-theory-section {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .gt-content {
+    padding: 14px 16px;
+  }
+
+  .gt-actor-block {
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .gt-actor-block:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .gt-actor-name {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent-blue-bright);
+    margin-bottom: 5px;
+  }
+
+  .gt-logic {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .gt-dominant {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent-amber-bright);
+    margin-top: 6px;
+    padding: 5px 8px;
+    background: rgba(212,137,10,0.07);
+    border-left: 2px solid var(--accent-amber);
+  }
+
+  /* ── RIGHT COLUMN SECTIONS ── */
+  .right-section {
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── LEADERSHIP STATUS ── */
+  .leader-item {
+    padding: 9px 14px;
+    border-bottom: 1px solid rgba(30,45,61,0.5);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .leader-item:last-child { border-bottom: none; }
+
+  .leader-left { flex: 1; }
+  .leader-name { font-family: var(--mono); font-weight: bold; font-size: 11px; letter-spacing: 1px; }
+  .leader-title { font-family: var(--mono); font-size: 8px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; }
+  .leader-note { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+
+  .leader-status {
+    font-family: var(--mono);
+    font-size: 8px;
+    padding: 3px 7px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .status-active { background: rgba(39,174,96,0.15); border: 1px solid rgba(39,174,96,0.4); color: var(--confirmed); }
+  .status-unknown { background: rgba(212,137,10,0.15); border: 1px solid rgba(212,137,10,0.4); color: var(--unconfirmed); animation: pulse-red 2s infinite; }
+  .status-dead { background: rgba(61,81,102,0.3); border: 1px solid var(--border); color: var(--text-dim); }
+  .status-unconfirmed-dead { background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.4); color: var(--signal); animation: pulse-red 1.5s infinite; }
+
+  /* ── STRAIT STATUS ── */
+  .strait-display {
+    padding: 12px 14px;
+  }
+
+  .strait-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .strait-name {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .strait-badge {
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 4px 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .strait-open { background: rgba(39,174,96,0.15); border: 1px solid rgba(39,174,96,0.4); color: var(--confirmed); }
+  .strait-threatened { background: rgba(212,137,10,0.15); border: 1px solid rgba(212,137,10,0.4); color: var(--unconfirmed); }
+  .strait-closed { background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.4); color: var(--signal); animation: pulse-red 1s infinite; }
+
+  .strait-context { font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
+
+  /* ── MARKET DATA ── */
+  .market-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .market-item {
+    background: var(--bg-card);
+    padding: 10px 12px;
+  }
+
+  .market-name {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .market-price {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: bold;
+  }
+
+  .market-change {
+    font-family: var(--mono);
+    font-size: 10px;
+    margin-top: 1px;
+  }
+
+  .change-up { color: var(--accent-green-bright); }
+  .change-down { color: var(--accent-red-bright); }
+  .change-neutral { color: var(--text-dim); }
+
+  .market-note { font-size: 9px; color: var(--text-dim); margin-top: 2px; }
+
+  /* ── HUMANITARIAN ── */
+  .humanitarian-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    margin-bottom: 1px;
+  }
+
+  .stat-box {
+    background: var(--bg-card);
+    padding: 10px 12px;
+  }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 8px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .stat-value {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--text-primary);
+  }
+
+  .stat-qualifier {
+    font-family: var(--mono);
+    font-size: 8px;
+    color: var(--unconfirmed);
+    letter-spacing: 1px;
+  }
+
+  /* ── WILDCARD ── */
+  .wildcard-list { list-style: none; }
+
+  .wildcard-item {
+    padding: 9px 14px;
+    border-bottom: 1px solid rgba(30,45,61,0.4);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .wildcard-item:last-child { border-bottom: none; }
+
+  .wc-probability {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent-amber-bright);
+    flex-shrink: 0;
+    width: 36px;
+    text-align: right;
+    margin-top: 1px;
+  }
+
+  .wc-text { flex: 1; }
+  .wc-title { font-size: 11px; color: var(--text-primary); font-weight: 500; margin-bottom: 2px; }
+  .wc-desc { font-size: 10px; color: var(--text-secondary); line-height: 1.4; }
+
+  .wc-impact {
+    font-family: var(--mono);
+    font-size: 8px;
+    padding: 2px 5px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .impact-critical { background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.4); color: var(--signal); }
+  .impact-high { background: rgba(212,137,10,0.15); border: 1px solid rgba(212,137,10,0.4); color: var(--unconfirmed); }
+
+  /* ── MEDIA FRAMING ── */
+  .framing-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .framing-col {
+    background: var(--bg-card);
+    padding: 10px 12px;
+  }
+
+  .framing-source {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .framing-point {
+    font-size: 10px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 4px;
+    padding-left: 8px;
+    border-left: 2px solid var(--border);
+  }
+
+  /* ── TIMELINE ── */
+  .timeline-list { list-style: none; }
+
+  .timeline-item {
+    display: flex;
+    gap: 0;
+    position: relative;
+  }
+
+  .timeline-left {
+    width: 70px;
+    flex-shrink: 0;
+    padding: 10px 10px 10px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+
+  .timeline-date {
+    font-family: var(--mono);
+    font-size: 8px;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .timeline-connector {
+    position: absolute;
+    left: 70px;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: var(--border);
+  }
+
+  .timeline-node {
+    position: absolute;
+    left: 66px;
+    top: 14px;
+    width: 9px; height: 9px;
+    background: var(--bg-primary);
+    border: 2px solid var(--accent-blue);
+    border-radius: 50%;
+    z-index: 1;
+  }
+
+  .timeline-node.node-red { border-color: var(--accent-red-bright); }
+  .timeline-node.node-amber { border-color: var(--accent-amber-bright); }
+
+  .timeline-right {
+    padding: 10px 14px 10px 18px;
+    flex: 1;
+  }
+
+  .timeline-event {
+    font-size: 11px;
+    color: var(--text-primary);
+    line-height: 1.4;
+    margin-bottom: 2px;
+  }
+
+  .timeline-detail {
+    font-size: 10px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  /* ── DIPLO SECTION ── */
+  .diplo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .diplo-card {
+    background: var(--bg-card);
+    padding: 11px 14px;
+  }
+
+  .diplo-country {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .diplo-stance {
+    font-family: var(--mono);
+    font-size: 8px;
+    padding: 2px 6px;
+    display: inline-block;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+
+  .stance-against { background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.4); color: var(--signal); }
+  .stance-neutral { background: rgba(61,81,102,0.3); border: 1px solid var(--border); color: var(--text-secondary); }
+  .stance-support { background: rgba(39,174,96,0.15); border: 1px solid rgba(39,174,96,0.4); color: var(--confirmed); }
+  .stance-watching { background: rgba(30,127,203,0.15); border: 1px solid rgba(30,127,203,0.4); color: var(--accent-blue-bright); }
+
+  .diplo-note { font-size: 10px; color: var(--text-secondary); line-height: 1.4; }
+
+  /* ── WATCHLIST ── */
+  .watchlist-item {
+    padding: 9px 14px;
+    border-bottom: 1px solid rgba(30,45,61,0.4);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .watchlist-item:last-child { border-bottom: none; }
+
+  .watch-icon {
+    font-size: 10px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: var(--accent-amber-bright);
+  }
+
+  .watch-text { flex: 1; font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
+  .watch-text strong { color: var(--text-primary); }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg-primary); }
+  ::-webkit-scrollbar-thumb { background: var(--border-bright); }
+
+  /* ── CONFIRM MODAL ── */
+  #confirm-modal {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .confirm-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-bright);
+    padding: 24px;
+    width: 320px;
+  }
+
+  .confirm-title {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .confirm-body {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+
+  .confirm-cost {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent-amber-bright);
+    margin-bottom: 16px;
+  }
+
+  .confirm-buttons {
+    display: flex;
+    gap: 8px;
+  }
+
+  .confirm-yes {
+    flex: 1;
+    background: var(--accent-blue);
+    border: none;
+    color: white;
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 9px;
+    cursor: pointer;
+  }
+
+  .confirm-no {
+    flex: 1;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 9px;
+    cursor: pointer;
+  }
+
+  /* ── REGIONS ── */
+  .section-body { overflow: hidden; }
+
+  .parsed-content p { margin-bottom: 6px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+  .parsed-content strong { color: var(--text-primary); }
+  .parsed-content .conf { color: var(--confirmed); font-family: var(--mono); font-size: 9px; letter-spacing: 1px; }
+  .parsed-content .unc { color: var(--unconfirmed); font-family: var(--mono); font-size: 9px; letter-spacing: 1px; }
+  .parsed-content .sig { color: var(--signal); font-family: var(--mono); font-size: 9px; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+
+<!-- ══ AUTH SCREEN ══ -->
+<div id="auth-screen">
+  <div class="auth-logo">EVENFALL</div>
+  <div class="auth-divider"></div>
+  <div class="auth-form">
+    <div class="auth-label">Access Code Required</div>
+    <input type="password" class="auth-input" id="password-input" placeholder="Enter access code" autocomplete="off">
+    <div class="auth-error" id="auth-error">INVALID ACCESS CODE</div>
+    <button class="auth-btn" onclick="checkPassword()">AUTHENTICATE</button>
+  </div>
+</div>
+
+<!-- ══ CONFIRM MODAL ══ -->
+<div id="confirm-modal">
+  <div class="confirm-box">
+    <div class="confirm-title">Confirm Refresh</div>
+    <div class="confirm-body" id="confirm-body">This will refresh all sections simultaneously.</div>
+    <div class="confirm-cost" id="confirm-cost">~$0.20 estimated cost</div>
+    <div class="confirm-buttons">
+      <button class="confirm-yes" id="confirm-yes-btn">Confirm</button>
+      <button class="confirm-no" onclick="closeConfirm()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MAIN APP ══ -->
+<div id="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="brand">EVEN<span>FALL</span></div>
+      <div class="conflict-tag">● LIVE — IRAN/US/ISRAEL</div>
+    </div>
+    <div class="topbar-right">
+      <div class="spend-tracker">
+        <span>SESSION</span>
+        <span class="spend-amount" id="spend-display">$0.000</span>
+        <div class="spend-bar"><div class="spend-fill" id="spend-fill"></div></div>
+        <span id="spend-cap-label">/ $5.00 daily cap</span>
+      </div>
+      <div class="utc-clock" id="utc-clock">--:--:-- UTC</div>
+      <button class="refresh-all-btn" onclick="confirmRefreshAll()">↻ REFRESH ALL</button>
+    </div>
+  </div>
+
+  <!-- API KEY BANNER -->
+  <div id="api-banner">
+    <label>⚠ API KEY</label>
+    <input type="text" id="api-key-input" placeholder="sk-ant-api03-..." autocomplete="off">
+    <button id="save-key-btn" onclick="saveApiKey()">SAVE KEY</button>
+    <span id="api-status"></span>
+  </div>
+
+  <!-- DAILY CAP WARNING -->
+  <div id="cap-warning">⚠ DAILY SPENDING CAP REACHED — ALL REFRESHES DISABLED UNTIL MIDNIGHT UTC</div>
+
+  <!-- MAIN LAYOUT -->
+  <div class="main-layout">
+
+    <!-- ══ LEFT COLUMN ══ -->
+    <div class="left-column">
+
+      <!-- HEADLINE TICKER -->
+      <div id="headline-section">
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--accent-red-bright); animation: pulse-red 1.5s infinite;"></div>LIVE HEADLINE FEED</div>
+          <div class="section-meta">
+            <span class="last-updated" id="headlines-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="headlines-cooldown"></span>
+            <button class="refresh-btn" id="headlines-btn" onclick="refreshSection('headlines')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="headlines-loading">FETCHING INTELLIGENCE...</div>
+        <div id="headlines-content">
+          <div class="empty-state">[ AWAITING INITIAL LOAD ]</div>
+        </div>
+      </div>
+
+      <!-- ESCALATION METER -->
+      <div class="escalation-bar-container">
+        <div class="escalation-label">
+          <span>ESCALATION INDEX</span>
+          <span class="escalation-level-text" id="escalation-text">— / 10</span>
+        </div>
+        <div class="escalation-track">
+          <div class="escalation-fill" id="escalation-fill"></div>
+        </div>
+        <div class="escalation-markers">
+          <span>CONTAINED</span><span>REGIONAL</span><span>EXPANDED</span><span>EXISTENTIAL</span>
+        </div>
+      </div>
+
+      <!-- ACTOR STATUS -->
+      <div>
+        <div class="section-header">
+          <div class="section-title"><div class="dot"></div>ACTOR STATUS</div>
+          <div class="section-meta">
+            <span class="last-updated" id="actors-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="actors-cooldown"></span>
+            <button class="refresh-btn" id="actors-btn" onclick="refreshSection('actors')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="actors-loading">FETCHING INTELLIGENCE...</div>
+        <div id="actors-content">
+          <div class="actors-grid">
+            <div class="actor-card"><div class="empty-state">—</div></div>
+            <div class="actor-card"><div class="empty-state">—</div></div>
+            <div class="actor-card"><div class="empty-state">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MILITARY OPERATIONS -->
+      <div>
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--accent-red-bright)"></div>MILITARY OPERATIONS</div>
+          <div class="section-meta">
+            <span class="last-updated" id="military-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="military-cooldown"></span>
+            <button class="refresh-btn" id="military-btn" onclick="refreshSection('military')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="military-loading">FETCHING INTELLIGENCE...</div>
+        <div id="military-content">
+          <div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div>
+        </div>
+      </div>
+
+      <!-- PROXY & REGIONAL ACTORS -->
+      <div>
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--accent-amber-bright)"></div>PROXY & REGIONAL ACTORS</div>
+          <div class="section-meta">
+            <span class="last-updated" id="proxy-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="proxy-cooldown"></span>
+            <button class="refresh-btn" id="proxy-btn" onclick="refreshSection('proxy')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="proxy-loading">FETCHING INTELLIGENCE...</div>
+        <div id="proxy-content">
+          <div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div>
+        </div>
+      </div>
+
+      <!-- DIPLOMATIC LANDSCAPE -->
+      <div>
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--accent-blue-bright)"></div>DIPLOMATIC LANDSCAPE</div>
+          <div class="section-meta">
+            <span class="last-updated" id="diplo-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="diplo-cooldown"></span>
+            <button class="refresh-btn" id="diplo-btn" onclick="refreshSection('diplo')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="diplo-loading">FETCHING INTELLIGENCE...</div>
+        <div id="diplo-content">
+          <div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div>
+        </div>
+      </div>
+
+      <!-- HUMANITARIAN DATA -->
+      <div>
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:#e67e22"></div>HUMANITARIAN DATA</div>
+          <div class="section-meta">
+            <span class="last-updated" id="humanitarian-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="humanitarian-cooldown"></span>
+            <button class="refresh-btn" id="humanitarian-btn" onclick="refreshSection('humanitarian')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="humanitarian-loading">FETCHING INTELLIGENCE...</div>
+        <div id="humanitarian-content">
+          <div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div>
+        </div>
+      </div>
+
+      <!-- MEDIA FRAMING -->
+      <div>
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--accent-purple)"></div>MEDIA FRAMING COMPARISON</div>
+          <div class="section-meta">
+            <span class="last-updated" id="media-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="media-cooldown"></span>
+            <button class="refresh-btn" id="media-btn" onclick="refreshSection('media')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="media-loading">FETCHING INTELLIGENCE...</div>
+        <div id="media-content">
+          <div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div>
+        </div>
+      </div>
+
+      <!-- CONFLICT TIMELINE -->
+      <div>
+        <div class="section-header">
+          <div class="section-title"><div class="dot"></div>CONFLICT CHRONOLOGY</div>
+          <div class="section-meta">
+            <span class="last-updated" id="timeline-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="timeline-cooldown"></span>
+            <button class="refresh-btn" id="timeline-btn" onclick="refreshSection('timeline')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="timeline-loading">FETCHING INTELLIGENCE...</div>
+        <div id="timeline-content">
+          <div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div>
+        </div>
+      </div>
+
+    </div><!-- /left-column -->
+
+    <!-- ══ RIGHT COLUMN ══ -->
+    <div class="right-column">
+
+      <!-- GAME THEORY ASSESSMENT -->
+      <div id="game-theory-section" class="right-section">
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--accent-amber-bright)"></div>GAME THEORY ASSESSMENT</div>
+          <div class="section-meta">
+            <span class="last-updated" id="gt-updated">NOT LOADED</span>
+            <button class="refresh-btn" id="gt-btn" onclick="refreshSection('gt')">↻ ANALYZE</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="gt-loading">RUNNING GAME THEORY ANALYSIS...</div>
+        <div id="gt-content">
+          <div class="empty-state" style="padding:20px">[ MANUAL TRIGGER REQUIRED ]<br><br>Click ANALYZE to run game theory assessment across all major actors. This section does not auto-refresh.</div>
+        </div>
+      </div>
+
+      <!-- LEADERSHIP STATUS -->
+      <div class="right-section">
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--signal); animation:pulse-red 1.5s infinite"></div>LEADERSHIP STATUS</div>
+          <div class="section-meta">
+            <span class="last-updated" id="leaders-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="leaders-cooldown"></span>
+            <button class="refresh-btn" id="leaders-btn" onclick="refreshSection('leaders')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="leaders-loading">FETCHING INTELLIGENCE...</div>
+        <div id="leaders-content">
+          <div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div>
+        </div>
+      </div>
+
+      <!-- STRAIT OF HORMUZ -->
+      <div class="right-section">
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--accent-blue-bright)"></div>STRAIT OF HORMUZ</div>
+          <div class="section-meta">
+            <span class="last-updated" id="strait-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="strait-cooldown"></span>
+            <button class="refresh-btn" id="strait-btn" onclick="refreshSection('strait')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="strait-loading">FETCHING INTELLIGENCE...</div>
+        <div id="strait-content">
+          <div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div>
+        </div>
+      </div>
+
+      <!-- MARKET IMPACT -->
+      <div class="right-section">
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--accent-green-bright)"></div>MARKET IMPACT</div>
+          <div class="section-meta">
+            <span class="last-updated" id="market-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="market-cooldown"></span>
+            <button class="refresh-btn" id="market-btn" onclick="refreshSection('market')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="market-loading">FETCHING INTELLIGENCE...</div>
+        <div id="market-content">
+          <div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div>
+        </div>
+      </div>
+
+      <!-- BLACKSWAN / WILDCARD -->
+      <div class="right-section">
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--signal)"></div>WILDCARD / BLACK SWAN</div>
+          <div class="section-meta">
+            <span class="last-updated" id="wildcard-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="wildcard-cooldown"></span>
+            <button class="refresh-btn" id="wildcard-btn" onclick="refreshSection('wildcard')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="wildcard-loading">FETCHING INTELLIGENCE...</div>
+        <div id="wildcard-content">
+          <div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div>
+        </div>
+      </div>
+
+      <!-- WHAT TO WATCH NEXT -->
+      <div class="right-section">
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--accent-amber-bright)"></div>TRIPWIRES — WHAT TO WATCH</div>
+          <div class="section-meta">
+            <span class="last-updated" id="watchlist-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="watchlist-cooldown"></span>
+            <button class="refresh-btn" id="watchlist-btn" onclick="refreshSection('watchlist')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="watchlist-loading">FETCHING INTELLIGENCE...</div>
+        <div id="watchlist-content">
+          <div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div>
+        </div>
+      </div>
+
+    </div><!-- /right-column -->
+  </div><!-- /main-layout -->
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// EVENFALL — CONFLICT INTELLIGENCE MONITOR
+// Iran / US / Israel — Active Conflict
+// ═══════════════════════════════════════════════════════════════
+
+const PASSWORD = "Furefurecontralucemmorientem$";
+const DAILY_CAP = 5.00;
+const COST_PER_1K_INPUT = 0.003;
+const COST_PER_1K_OUTPUT = 0.015;
+
+// Section cooldowns in milliseconds
+const COOLDOWNS = {
+  headlines: 3 * 60 * 1000,      // 3 min
+  actors: 8 * 60 * 1000,          // 8 min
+  military: 5 * 60 * 1000,        // 5 min
+  proxy: 10 * 60 * 1000,          // 10 min
+  diplo: 15 * 60 * 1000,          // 15 min
+  humanitarian: 12 * 60 * 1000,   // 12 min
+  media: 20 * 60 * 1000,          // 20 min
+  timeline: 30 * 60 * 1000,       // 30 min
+  gt: Infinity,                    // manual only
+  leaders: 5 * 60 * 1000,         // 5 min
+  strait: 8 * 60 * 1000,          // 8 min
+  market: 5 * 60 * 1000,          // 5 min
+  wildcard: 20 * 60 * 1000,       // 20 min
+  watchlist: 15 * 60 * 1000,      // 15 min
+};
+
+// State
+let apiKey = localStorage.getItem('evenfall_apikey') || '';
+let sessionSpend = 0;
+let dailySpend = parseFloat(localStorage.getItem('evenfall_daily_spend') || '0');
+let dailySpendDate = localStorage.getItem('evenfall_daily_date') || '';
+let lastRefresh = {};
+let sectionData = {};
+let confirmCallback = null;
+
+// ─── AUTH ───
+function checkPassword() {
+  const val = document.getElementById('password-input').value;
+  if (val === PASSWORD) {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    initApp();
+  } else {
+    document.getElementById('auth-error').style.display = 'block';
+    document.getElementById('password-input').value = '';
+    document.getElementById('password-input').focus();
+  }
+}
+
+document.getElementById('password-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkPassword();
+});
+
+// ─── INIT ───
+function initApp() {
+  // Reset daily spend if new day
+  const today = new Date().toISOString().split('T')[0];
+  if (dailySpendDate !== today) {
+    dailySpend = 0;
+    localStorage.setItem('evenfall_daily_spend', '0');
+    localStorage.setItem('evenfall_daily_date', today);
+    dailySpendDate = today;
+  }
+
+  // Load API key
+  if (apiKey) {
+    document.getElementById('api-key-input').value = apiKey;
+    document.getElementById('api-status').textContent = '✓ KEY LOADED';
+    document.getElementById('api-banner').style.background = 'rgba(26,122,74,0.08)';
+    document.getElementById('api-banner').style.borderColor = 'rgba(26,122,74,0.3)';
+  }
+
+  // Load cached data
+  loadCachedData();
+
+  updateSpendDisplay();
+  updateClock();
+  setInterval(updateClock, 1000);
+  setInterval(updateCooldownDisplays, 5000);
+
+  // Auto-refresh headlines every 3 min if key is set
+  setInterval(() => {
+    if (apiKey && !isDailyCapped() && canRefresh('headlines')) {
+      refreshSection('headlines', true);
+    }
+  }, 3 * 60 * 1000);
+}
+
+function loadCachedData() {
+  const sections = ['headlines','actors','military','proxy','diplo','humanitarian','media','timeline','gt','leaders','strait','market','wildcard','watchlist'];
+  sections.forEach(s => {
+    const cached = localStorage.getItem(`evenfall_data_${s}`);
+    const cachedTime = localStorage.getItem(`evenfall_time_${s}`);
+    if (cached) {
+      sectionData[s] = cached;
+      lastRefresh[s] = parseInt(cachedTime) || 0;
+      renderSection(s, cached);
+      updateSectionTime(s, parseInt(cachedTime));
+    }
+  });
+}
+
+// ─── API KEY ───
+function saveApiKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (val && val.startsWith('sk-')) {
+    apiKey = val;
+    localStorage.setItem('evenfall_apikey', val);
+    document.getElementById('api-status').textContent = '✓ KEY SAVED';
+    document.getElementById('api-banner').style.background = 'rgba(26,122,74,0.08)';
+    document.getElementById('api-banner').style.borderColor = 'rgba(26,122,74,0.3)';
+  }
+}
+
+// ─── SPEND ───
+function isDailyCapped() {
+  return dailySpend >= DAILY_CAP;
+}
+
+function addSpend(inputTokens, outputTokens) {
+  const cost = (inputTokens / 1000 * COST_PER_1K_INPUT) + (outputTokens / 1000 * COST_PER_1K_OUTPUT);
+  sessionSpend += cost;
+  dailySpend += cost;
+  localStorage.setItem('evenfall_daily_spend', dailySpend.toFixed(4));
+  updateSpendDisplay();
+  if (isDailyCapped()) {
+    document.getElementById('cap-warning').style.display = 'block';
+    document.getElementById('refresh-all-btn') && (document.querySelector('.refresh-all-btn').disabled = true);
+  }
+}
+
+function updateSpendDisplay() {
+  document.getElementById('spend-display').textContent = `$${sessionSpend.toFixed(3)}`;
+  const pct = Math.min(100, (dailySpend / DAILY_CAP) * 100);
+  document.getElementById('spend-fill').style.width = pct + '%';
+  document.getElementById('spend-fill').style.background = pct > 80 ? 'var(--accent-red)' : pct > 50 ? 'var(--accent-amber)' : 'var(--accent-blue)';
+}
+
+// ─── CLOCK ───
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getUTCHours()).padStart(2,'0');
+  const m = String(now.getUTCMinutes()).padStart(2,'0');
+  const s = String(now.getUTCSeconds()).padStart(2,'0');
+  document.getElementById('utc-clock').textContent = `${h}:${m}:${s} UTC`;
+}
+
+// ─── COOLDOWNS ───
+function canRefresh(section) {
+  if (COOLDOWNS[section] === Infinity) return true;
+  const last = lastRefresh[section] || 0;
+  return (Date.now() - last) >= COOLDOWNS[section];
+}
+
+function updateCooldownDisplays() {
+  Object.keys(COOLDOWNS).forEach(s => {
+    const el = document.getElementById(`${s}-cooldown`);
+    const btn = document.getElementById(`${s}-btn`);
+    if (!el || !btn) return;
+    if (COOLDOWNS[s] === Infinity) return;
+    const elapsed = Date.now() - (lastRefresh[s] || 0);
+    const remaining = COOLDOWNS[s] - elapsed;
+    if (remaining > 0) {
+      const mins = Math.ceil(remaining / 60000);
+      el.textContent = `cooldown ${mins}m`;
+      btn.disabled = true;
+    } else {
+      el.textContent = '';
+      btn.disabled = false;
+    }
+  });
+}
+
+function updateSectionTime(section, timestamp) {
+  const el = document.getElementById(`${section}-updated`);
+  if (!el || !timestamp) return;
+  const ago = Math.floor((Date.now() - timestamp) / 60000);
+  if (ago < 1) el.textContent = 'updated just now';
+  else if (ago < 60) el.textContent = `updated ${ago}m ago`;
+  else el.textContent = `updated ${Math.floor(ago/60)}h ago`;
+}
+
+// ─── CONFIRM MODAL ───
+function confirmRefreshAll() {
+  if (isDailyCapped()) return;
+  document.getElementById('confirm-body').textContent = 'This will refresh all sections simultaneously and consume the most tokens.';
+  document.getElementById('confirm-cost').textContent = '~$0.30–0.50 estimated cost';
+  document.getElementById('confirm-modal').style.display = 'flex';
+  confirmCallback = () => {
+    closeConfirm();
+    executeRefreshAll();
+  };
+  document.getElementById('confirm-yes-btn').onclick = confirmCallback;
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-modal').style.display = 'none';
+}
+
+async function executeRefreshAll() {
+  const sections = ['headlines','leaders','military','actors','proxy','strait','market','diplo','humanitarian','wildcard','watchlist','media','timeline'];
+  for (const s of sections) {
+    await refreshSection(s, true);
+    await sleep(800);
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ─── SECTION PROMPTS ───
+const SECTION_PROMPTS = {
+  headlines: `You are an intelligence analyst monitoring the active Iran/US/Israel military conflict that began on February 28, 2026. Search for the very latest headlines and breaking news about this conflict right now.
+
+Return a JSON array of exactly 10 headline items. Each item must have:
+- "time": time string like "14:32 UTC" or "2h ago"  
+- "text": the headline text (1-2 sentences, factual)
+- "status": one of "CONFIRMED", "UNCONFIRMED", or "SIGNAL" (SIGNAL means unconfirmed chatter/trend worth watching)
+- "source": brief source attribution
+
+Return ONLY valid JSON array, no other text. Example format:
+[{"time":"14:32 UTC","text":"...","status":"CONFIRMED","source":"Reuters"},...]`,
+
+  actors: `You are an intelligence analyst. Search for current news on the Iran/US/Israel conflict (Feb 28, 2026). Return a JSON object with actor status cards.
+
+Return ONLY valid JSON with this exact structure:
+{
+  "escalation": 8.5,
+  "actors": [
+    {"name":"UNITED STATES","role":"Primary Attacker","posture":"OFFENSIVE","lastAction":"...","nextLikely":"..."},
+    {"name":"ISRAEL","role":"Primary Attacker","posture":"OFFENSIVE","lastAction":"...","nextLikely":"..."},
+    {"name":"IRAN","role":"Defender/Retaliating","posture":"RETALIATING","lastAction":"...","nextLikely":"..."},
+    {"name":"RUSSIA","role":"Geopolitical Actor","posture":"MONITORING","lastAction":"...","nextLikely":"..."},
+    {"name":"CHINA","role":"Geopolitical Actor","posture":"MONITORING","lastAction":"...","nextLikely":"..."},
+    {"name":"GULF STATES","role":"Caught in Crossfire","posture":"DEFENSIVE","lastAction":"...","nextLikely":"..."}
+  ]
+}
+Escalation is a float 0-10. Posture must be one of: OFFENSIVE, DEFENSIVE, RETALIATING, MONITORING, UNKNOWN.
+Return ONLY valid JSON, no other text.`,
+
+  military: `Intelligence analyst. Search current news on military operations in Iran/US/Israel conflict Feb 28, 2026.
+
+Return ONLY valid JSON:
+{
+  "offensive": [
+    {"type":"US/ISRAEL","target":"...","method":"...","status":"CONFIRMED|UNCONFIRMED","note":"..."}
+  ],
+  "defensive": [
+    {"type":"IRAN|INTERCEPT","action":"...","result":"...","status":"CONFIRMED|UNCONFIRMED"}
+  ],
+  "retaliation": [
+    {"actor":"IRAN","target":"...","weapon":"...","result":"...","status":"CONFIRMED|UNCONFIRMED"}
+  ],
+  "assets": {
+    "us_carriers": "...",
+    "us_bases_affected": "...",
+    "iran_missile_sites": "...",
+    "iran_nuclear_sites": "..."
+  }
+}
+Return ONLY valid JSON, no other text.`,
+
+  proxy: `Intelligence analyst. Search current news on proxy and regional actor involvement in Iran/US/Israel conflict Feb 28, 2026.
+
+Return ONLY valid JSON array:
+[
+  {"name":"HOUTHIS","activity":"HIGH|MEDIUM|LOW|UNKNOWN","description":"...","latestAction":"...","threatLevel":"..."},
+  {"name":"HEZBOLLAH","activity":"...","description":"...","latestAction":"...","threatLevel":"..."},
+  {"name":"IRAQI MILITIAS","activity":"...","description":"...","latestAction":"...","threatLevel":"..."},
+  {"name":"HAMAS","activity":"...","description":"...","latestAction":"...","threatLevel":"..."}
+]
+Return ONLY valid JSON array, no other text.`,
+
+  diplo: `Intelligence analyst. Search current diplomatic reactions to Iran/US/Israel strikes Feb 28, 2026.
+
+Return ONLY valid JSON array of country/bloc reactions:
+[
+  {"country":"...","stance":"AGAINST|NEUTRAL|SUPPORT|WATCHING","note":"..."},
+  ...
+]
+Include: EU, Russia, China, Turkey, Saudi Arabia, Qatar, UAE, Jordan, UK, France, Germany, India, UN Security Council.
+Return ONLY valid JSON array, no other text.`,
+
+  humanitarian: `Intelligence analyst. Search for current humanitarian data from Iran/US/Israel conflict Feb 28, 2026.
+
+Return ONLY valid JSON:
+{
+  "iranCasualties": {"value":"...","qualifier":"CONFIRMED|ESTIMATED|REPORTED"},
+  "israelCasualties": {"value":"...","qualifier":"..."},
+  "usCasualties": {"value":"...","qualifier":"..."},
+  "displaced": {"value":"...","qualifier":"..."},
+  "civilianInfrastructure": ["list of civilian infrastructure struck..."],
+  "schoolHospitalStrikes": "...",
+  "redCrossNote": "...",
+  "context": "2-3 sentences on humanitarian situation"
+}
+Return ONLY valid JSON, no other text.`,
+
+  media: `Intelligence analyst. Analyze how different media ecosystems are framing the Iran/US/Israel conflict on Feb 28, 2026.
+
+Return ONLY valid JSON:
+{
+  "western": {"label":"WESTERN MEDIA","points":["key framing point 1","key framing point 2","key framing point 3"]},
+  "iranian": {"label":"IRANIAN STATE MEDIA","points":["...","...","..."]},
+  "gulf": {"label":"GULF / AL JAZEERA","points":["...","...","..."]}
+}
+Return ONLY valid JSON, no other text.`,
+
+  timeline: `Intelligence analyst. Provide a comprehensive chronological timeline of the Iran/US/Israel conflict starting from June 2025 through today Feb 28, 2026.
+
+Return ONLY valid JSON array:
+[
+  {"date":"Jun 13, 2025","event":"...","detail":"...","significance":"HIGH|MEDIUM|LOW"},
+  ...
+]
+Include 12-15 most significant events. Return ONLY valid JSON array, no other text.`,
+
+  gt: `You are a strategic analyst specializing in game theory and geopolitical reasoning. Analyze the Iran/US/Israel active military conflict as of Feb 28, 2026 using game theory frameworks.
+
+For each major actor, provide: their dominant strategy, their payoff matrix logic, and their most rational next move.
+
+Return ONLY valid JSON:
+{
+  "actors": [
+    {
+      "name":"UNITED STATES",
+      "dominantStrategy":"...",
+      "logic":"2-3 sentences of tight game theory reasoning",
+      "rationalNextMove":"..."
+    },
+    {"name":"ISRAEL","dominantStrategy":"...","logic":"...","rationalNextMove":"..."},
+    {"name":"IRAN","dominantStrategy":"...","logic":"...","rationalNextMove":"..."},
+    {"name":"RUSSIA","dominantStrategy":"...","logic":"...","rationalNextMove":"..."},
+    {"name":"CHINA","dominantStrategy":"...","logic":"...","rationalNextMove":"..."}
+  ],
+  "equilibrium": "1-2 sentences on Nash equilibrium or likely stable outcome",
+  "keyUncertainty": "The single most important unknown that could change the entire game"
+}
+Return ONLY valid JSON, no other text.`,
+
+  leaders: `Intelligence analyst. Search for current confirmed status of key leadership figures in Iran/US/Israel conflict Feb 28, 2026.
+
+Return ONLY valid JSON array:
+[
+  {"name":"Ali Khamenei","title":"Supreme Leader, Iran","status":"ACTIVE|UNKNOWN|DEAD|UNCONFIRMED-DEAD","note":"..."},
+  {"name":"Masoud Pezeshkian","title":"President, Iran","status":"...","note":"..."},
+  {"name":"Benjamin Netanyahu","title":"PM, Israel","status":"...","note":"..."},
+  {"name":"Donald Trump","title":"President, USA","status":"...","note":"..."},
+  {"name":"Yoav Gallant / IDF Command","title":"Israel Military","status":"...","note":"..."},
+  {"name":"IRGC Command","title":"Iran Revolutionary Guard","status":"...","note":"..."}
+]
+Return ONLY valid JSON array, no other text.`,
+
+  strait: `Intelligence analyst. Search for current status of the Strait of Hormuz during Iran/US/Israel conflict Feb 28, 2026.
+
+Return ONLY valid JSON:
+{
+  "status": "OPEN|THREATENED|CLOSED",
+  "context": "2-3 sentences on current status, any Iranian threats or actions regarding the strait",
+  "oilImpact": "brief note on oil market impact if applicable",
+  "shippingStatus": "current commercial shipping situation"
+}
+Return ONLY valid JSON, no other text.`,
+
+  market: `Intelligence analyst. Search for current market data impact from Iran/US/Israel conflict Feb 28, 2026.
+
+Return ONLY valid JSON:
+{
+  "oil": {"name":"Brent Crude","price":"$XX.XX","change":"+X.X%","note":"..."},
+  "gas": {"name":"Nat Gas","price":"$X.XX","change":"...","note":"..."},
+  "gold": {"name":"Gold","price":"$XXXX","change":"...","note":"safe haven demand"},
+  "defenseSector": {"name":"Defense ETF (ITA)","price":"...","change":"...","note":"..."},
+  "vix": {"name":"VIX","price":"...","change":"...","note":"market fear index"},
+  "context": "1-2 sentences on overall market reaction"
+}
+Return ONLY valid JSON, no other text.`,
+
+  wildcard: `Intelligence analyst. Identify the top wildcard/black swan risks from the Iran/US/Israel conflict Feb 28, 2026.
+
+Return ONLY valid JSON array of 5 items, ordered by impact:
+[
+  {
+    "title":"...",
+    "probability":"X%",
+    "impact":"CRITICAL|HIGH",
+    "description":"1-2 sentences on why this matters and current signals"
+  },
+  ...
+]
+Return ONLY valid JSON array, no other text.`,
+
+  watchlist: `Intelligence analyst. Based on current Iran/US/Israel conflict Feb 28, 2026, identify the specific tripwires and signals that would indicate the next major escalation step.
+
+Return ONLY valid JSON array:
+[
+  {"trigger":"...","significance":"..."},
+  ...
+]
+Include 6-8 items. Return ONLY valid JSON array, no other text.`
+};
+
+// ─── MAIN REFRESH FUNCTION ───
+async function refreshSection(section, silent = false) {
+  if (!apiKey) {
+    alert('Please enter your Anthropic API key first.');
+    return;
+  }
+  if (isDailyCapped()) {
+    document.getElementById('cap-warning').style.display = 'block';
+    return;
+  }
+  if (!canRefresh(section) && !silent) return;
+
+  const btn = document.getElementById(`${section}-btn`);
+  const loading = document.getElementById(`${section}-loading`);
+  const content = document.getElementById(`${section}-content`);
+
+  if (btn) btn.disabled = true;
+  if (loading) loading.style.display = 'block';
+  if (content) content.style.opacity = '0.3';
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'web-search-2025-03-05'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{ role: 'user', content: SECTION_PROMPTS[section] }]
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(data.error.message || 'API error');
+    }
+
+    // Track tokens
+    if (data.usage) {
+      addSpend(data.usage.input_tokens || 0, data.usage.output_tokens || 0);
+    }
+
+    // Extract text content
+    let rawText = '';
+    if (data.content) {
+      for (const block of data.content) {
+        if (block.type === 'text') rawText += block.text;
+      }
+    }
+
+    // Parse and render
+    const parsed = extractJSON(rawText);
+    if (parsed) {
+      const jsonStr = JSON.stringify(parsed);
+      sectionData[section] = jsonStr;
+      localStorage.setItem(`evenfall_data_${section}`, jsonStr);
+      localStorage.setItem(`evenfall_time_${section}`, Date.now().toString());
+      lastRefresh[section] = Date.now();
+      renderSection(section, jsonStr);
+      updateSectionTime(section, Date.now());
+    } else {
+      if (content) content.innerHTML = `<div class="section-content"><div style="font-family:var(--mono);font-size:10px;color:var(--accent-amber-bright);padding:10px">⚠ PARSE ERROR — Raw response received. Raw: ${rawText.substring(0,200)}...</div></div>`;
+    }
+
+  } catch (err) {
+    if (content) content.innerHTML = `<div class="section-content"><div style="font-family:var(--mono);font-size:10px;color:var(--signal);padding:10px">⚠ ERROR: ${err.message}</div></div>`;
+  } finally {
+    if (loading) loading.style.display = 'none';
+    if (content) content.style.opacity = '1';
+    updateCooldownDisplays();
+  }
+}
+
+function extractJSON(text) {
+  try {
+    const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    return JSON.parse(cleaned);
+  } catch {
+    const arrMatch = text.match(/\[[\s\S]*\]/);
+    const objMatch = text.match(/\{[\s\S]*\}/);
+    try { if (arrMatch) return JSON.parse(arrMatch[0]); } catch {}
+    try { if (objMatch) return JSON.parse(objMatch[0]); } catch {}
+    return null;
+  }
+}
+
+// ─── RENDER FUNCTIONS ───
+function renderSection(section, jsonStr) {
+  try {
+    const data = JSON.parse(jsonStr);
+    const el = document.getElementById(`${section}-content`);
+    if (!el) return;
+
+    switch(section) {
+      case 'headlines': el.innerHTML = renderHeadlines(data); break;
+      case 'actors': el.innerHTML = renderActors(data); break;
+      case 'military': el.innerHTML = renderMilitary(data); break;
+      case 'proxy': el.innerHTML = renderProxy(data); break;
+      case 'diplo': el.innerHTML = renderDiplo(data); break;
+      case 'humanitarian': el.innerHTML = renderHumanitarian(data); break;
+      case 'media': el.innerHTML = renderMedia(data); break;
+      case 'timeline': el.innerHTML = renderTimeline(data); break;
+      case 'gt': el.innerHTML = renderGameTheory(data); break;
+      case 'leaders': el.innerHTML = renderLeaders(data); break;
+      case 'strait': el.innerHTML = renderStrait(data); break;
+      case 'market': el.innerHTML = renderMarket(data); break;
+      case 'wildcard': el.innerHTML = renderWildcard(data); break;
+      case 'watchlist': el.innerHTML = renderWatchlist(data); break;
+    }
+  } catch(e) {
+    console.error('Render error', section, e);
+  }
+}
+
+function renderHeadlines(data) {
+  if (!Array.isArray(data)) return '<div class="empty-state">No data</div>';
+  return `<ul class="headline-list">${data.map(h => {
+    const badgeClass = h.status === 'CONFIRMED' ? 'badge-confirmed' : h.status === 'SIGNAL' ? 'badge-signal' : 'badge-unconfirmed';
+    return `<li class="headline-item">
+      <span class="headline-badge ${badgeClass}">${h.status}</span>
+      <span class="headline-time">${esc(h.time)}</span>
+      <span class="headline-text">${esc(h.text)} <span style="color:var(--text-dim);font-size:9px">— ${esc(h.source||'')}</span></span>
+    </li>`;
+  }).join('')}</ul>`;
+}
+
+function renderActors(data) {
+  if (!data || !data.actors) return '<div class="empty-state">No data</div>';
+
+  // Update escalation meter
+  if (data.escalation) {
+    const pct = (data.escalation / 10) * 100;
+    document.getElementById('escalation-fill').style.width = pct + '%';
+    document.getElementById('escalation-text').textContent = `${data.escalation} / 10`;
+  }
+
+  const postureClass = p => {
+    const map = { OFFENSIVE:'posture-offensive', DEFENSIVE:'posture-defensive', RETALIATING:'posture-retaliating', MONITORING:'posture-monitoring' };
+    return map[p] || 'posture-unknown';
+  };
+
+  const actorsHtml = data.actors.map(a => `
+    <div class="actor-card">
+      <div class="actor-name">${esc(a.name)}</div>
+      <div class="actor-role">${esc(a.role)}</div>
+      <div class="actor-posture ${postureClass(a.posture)}">${esc(a.posture)}</div>
+      <div class="actor-label">LAST CONFIRMED ACTION</div>
+      <div class="actor-last-action">${esc(a.lastAction)}</div>
+      <div class="actor-label" style="margin-top:5px">LIKELY NEXT</div>
+      <div class="actor-last-action" style="color:var(--unconfirmed)">${esc(a.nextLikely)}</div>
+    </div>`).join('');
+
+  return `<div class="actors-grid">${actorsHtml}</div>`;
+}
+
+function renderMilitary(data) {
+  if (!data) return '<div class="empty-state">No data</div>';
+  const renderItems = (arr, dotClass) => (arr||[]).map(item => {
+    const text = item.target ? `<strong>${esc(item.type||item.actor||'')}</strong> → ${esc(item.target||item.action||'')} — ${esc(item.method||item.result||'')}` :
+      `<strong>${esc(item.type||item.actor||'')}</strong> ${esc(item.action||item.result||'')}`;
+    const badge = item.status === 'CONFIRMED' ? 'badge-confirmed' : 'badge-unconfirmed';
+    return `<div class="strike-item"><div class="strike-dot ${dotClass}"></div><div class="strike-text">${text} <span class="headline-badge ${badge}" style="font-size:7px;padding:1px 4px">${esc(item.status||'')}</span></div></div>`;
+  }).join('');
+
+  const assets = data.assets || {};
+  return `<div class="military-grid">
+    <div class="military-card">
+      <div class="military-card-title">OFFENSIVE STRIKES</div>
+      ${renderItems(data.offensive, 'dot-red')}
+    </div>
+    <div class="military-card">
+      <div class="military-card-title">IRANIAN RETALIATION</div>
+      ${renderItems(data.retaliation, 'dot-amber')}
+    </div>
+    <div class="military-card">
+      <div class="military-card-title">AIR DEFENSE / INTERCEPTS</div>
+      ${renderItems(data.defensive, 'dot-green')}
+    </div>
+    <div class="military-card">
+      <div class="military-card-title">KEY ASSETS STATUS</div>
+      ${Object.entries(assets).map(([k,v]) => `<div class="strike-item"><div class="strike-dot dot-blue"></div><div class="strike-text"><strong>${esc(k.replace(/_/g,' ').toUpperCase())}</strong>: ${esc(v)}</div></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function renderProxy(data) {
+  if (!Array.isArray(data)) return '<div class="empty-state">No data</div>';
+  const activityClass = a => ({ HIGH:'activity-high', MEDIUM:'activity-medium', LOW:'activity-low' }[a] || 'activity-unknown');
+  return `<div class="proxy-grid">${data.map(p => `
+    <div class="proxy-card">
+      <div class="proxy-name">${esc(p.name)}</div>
+      <div class="proxy-status-line">
+        <span class="proxy-activity ${activityClass(p.activity)}">${esc(p.activity)}</span>
+      </div>
+      <div class="proxy-desc">${esc(p.description)}</div>
+      <div class="actor-label" style="margin-top:6px">LATEST</div>
+      <div class="proxy-desc">${esc(p.latestAction)}</div>
+    </div>`).join('')}</div>`;
+}
+
+function renderDiplo(data) {
+  if (!Array.isArray(data)) return '<div class="empty-state">No data</div>';
+  const stanceClass = s => ({ AGAINST:'stance-against', NEUTRAL:'stance-neutral', SUPPORT:'stance-support', WATCHING:'stance-watching' }[s] || 'stance-neutral');
+  return `<div class="diplo-grid">${data.map(d => `
+    <div class="diplo-card">
+      <div class="diplo-country">${esc(d.country)}</div>
+      <div class="diplo-stance ${stanceClass(d.stance)}">${esc(d.stance)}</div>
+      <div class="diplo-note">${esc(d.note)}</div>
+    </div>`).join('')}</div>`;
+}
+
+function renderHumanitarian(data) {
+  if (!data) return '<div class="empty-state">No data</div>';
+  const qClass = q => q === 'CONFIRMED' ? 'conf' : q === 'ESTIMATED' ? 'unc' : 'sig';
+  const stats = [
+    { label: 'IRAN CASUALTIES', v: data.iranCasualties },
+    { label: 'ISRAEL CASUALTIES', v: data.israelCasualties },
+    { label: 'US CASUALTIES', v: data.usCasualties },
+    { label: 'DISPLACED', v: data.displaced }
+  ];
+
+  const statsHtml = `<div class="humanitarian-stats">${stats.map(s => `
+    <div class="stat-box">
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-value">${esc(s.v?.value || '—')}</div>
+      <div class="stat-qualifier ${qClass(s.v?.qualifier || '')}">${esc(s.v?.qualifier || '')}</div>
+    </div>`).join('')}</div>`;
+
+  const infraHtml = data.civilianInfrastructure?.length ? `
+    <div style="padding:10px 14px; border-bottom:1px solid var(--border)">
+      <div class="actor-label" style="margin-bottom:5px">CIVILIAN INFRASTRUCTURE STRUCK</div>
+      ${data.civilianInfrastructure.map(i => `<div class="strike-item"><div class="strike-dot dot-amber"></div><div class="strike-text">${esc(i)}</div></div>`).join('')}
+    </div>` : '';
+
+  const contextHtml = data.context ? `<div style="padding:10px 14px;"><div class="diplo-note">${esc(data.context)}</div></div>` : '';
+
+  return statsHtml + infraHtml + contextHtml;
+}
+
+function renderMedia(data) {
+  if (!data) return '<div class="empty-state">No data</div>';
+  const cols = [data.western, data.iranian, data.gulf].filter(Boolean);
+  const colors = ['var(--accent-blue-bright)', 'var(--accent-red-bright)', 'var(--accent-amber-bright)'];
+  return `<div class="framing-grid">${cols.map((col, i) => `
+    <div class="framing-col">
+      <div class="framing-source" style="color:${colors[i]}">${esc(col.label)}</div>
+      ${(col.points||[]).map(p => `<div class="framing-point">${esc(p)}</div>`).join('')}
+    </div>`).join('')}</div>`;
+}
+
+function renderTimeline(data) {
+  if (!Array.isArray(data)) return '<div class="empty-state">No data</div>';
+  const nodeClass = s => s === 'HIGH' ? 'node-red' : s === 'MEDIUM' ? 'node-amber' : '';
+  return `<ul class="timeline-list">${data.map(item => `
+    <li class="timeline-item">
+      <div class="timeline-left">
+        <span class="timeline-date">${esc(item.date)}</span>
+      </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-node ${nodeClass(item.significance)}"></div>
+      <div class="timeline-right">
+        <div class="timeline-event">${esc(item.event)}</div>
+        <div class="timeline-detail">${esc(item.detail)}</div>
+      </div>
+    </li>`).join('')}</ul>`;
+}
+
+function renderGameTheory(data) {
+  if (!data || !data.actors) return '<div class="empty-state">No data</div>';
+  const actorsHtml = data.actors.map(a => `
+    <div class="gt-actor-block">
+      <div class="gt-actor-name">${esc(a.name)}</div>
+      <div class="gt-logic">${esc(a.logic)}</div>
+      <div class="gt-dominant">▶ DOMINANT STRATEGY: ${esc(a.dominantStrategy)}<br>▶ RATIONAL NEXT MOVE: ${esc(a.rationalNextMove)}</div>
+    </div>`).join('');
+
+  const footerHtml = `
+    <div style="padding:12px 16px; background:rgba(30,127,203,0.05); border-top:1px solid var(--border)">
+      <div class="actor-label" style="margin-bottom:5px;color:var(--accent-blue-bright)">EQUILIBRIUM ASSESSMENT</div>
+      <div class="gt-logic">${esc(data.equilibrium)}</div>
+      <div class="actor-label" style="margin-top:8px;margin-bottom:4px;color:var(--accent-amber-bright)">KEY UNCERTAINTY</div>
+      <div class="gt-logic" style="color:var(--accent-amber-bright)">${esc(data.keyUncertainty)}</div>
+    </div>`;
+
+  return `<div class="gt-content">${actorsHtml}</div>${footerHtml}`;
+}
+
+function renderLeaders(data) {
+  if (!Array.isArray(data)) return '<div class="empty-state">No data</div>';
+  const statusClass = s => ({
+    ACTIVE: 'status-active',
+    UNKNOWN: 'status-unknown',
+    DEAD: 'status-dead',
+    'UNCONFIRMED-DEAD': 'status-unconfirmed-dead'
+  }[s] || 'status-unknown');
+  return data.map(l => `
+    <div class="leader-item">
+      <div class="leader-left">
+        <div class="leader-name">${esc(l.name)}</div>
+        <div class="leader-title">${esc(l.title)}</div>
+        <div class="leader-note">${esc(l.note)}</div>
+      </div>
+      <div class="leader-status ${statusClass(l.status)}">${esc(l.status)}</div>
+    </div>`).join('');
+}
+
+function renderStrait(data) {
+  if (!data) return '<div class="empty-state">No data</div>';
+  const statusClass = { OPEN:'strait-open', THREATENED:'strait-threatened', CLOSED:'strait-closed' }[data.status] || 'strait-threatened';
+  return `<div class="strait-display">
+    <div class="strait-status-row">
+      <div class="strait-name">STRAIT OF HORMUZ</div>
+      <div class="strait-badge ${statusClass}">${esc(data.status)}</div>
+    </div>
+    <div class="strait-context">${esc(data.context)}</div>
+    ${data.oilImpact ? `<div class="actor-label" style="margin-top:8px;margin-bottom:3px">OIL IMPACT</div><div class="strait-context">${esc(data.oilImpact)}</div>` : ''}
+    ${data.shippingStatus ? `<div class="actor-label" style="margin-top:8px;margin-bottom:3px">SHIPPING STATUS</div><div class="strait-context">${esc(data.shippingStatus)}</div>` : ''}
+  </div>`;
+}
+
+function renderMarket(data) {
+  if (!data) return '<div class="empty-state">No data</div>';
+  const items = ['oil','gas','gold','defenseSector','vix'].map(k => data[k]).filter(Boolean);
+  const changeClass = c => c && c.includes('+') ? 'change-up' : c && c.includes('-') ? 'change-down' : 'change-neutral';
+  const grid = `<div class="market-grid">${items.map(m => `
+    <div class="market-item">
+      <div class="market-name">${esc(m.name)}</div>
+      <div class="market-price">${esc(m.price)}</div>
+      <div class="market-change ${changeClass(m.change)}">${esc(m.change)}</div>
+      <div class="market-note">${esc(m.note||'')}</div>
+    </div>`).join('')}</div>`;
+  const ctx = data.context ? `<div style="padding:10px 14px;border-top:1px solid var(--border)"><div class="diplo-note">${esc(data.context)}</div></div>` : '';
+  return grid + ctx;
+}
+
+function renderWildcard(data) {
+  if (!Array.isArray(data)) return '<div class="empty-state">No data</div>';
+  const impactClass = i => i === 'CRITICAL' ? 'impact-critical' : 'impact-high';
+  return `<ul class="wildcard-list">${data.map(w => `
+    <li class="wildcard-item">
+      <div class="wc-probability">${esc(w.probability)}</div>
+      <div class="wc-text">
+        <div class="wc-title">${esc(w.title)}</div>
+        <div class="wc-desc">${esc(w.description)}</div>
+      </div>
+      <div class="wc-impact ${impactClass(w.impact)}">${esc(w.impact)}</div>
+    </li>`).join('')}</ul>`;
+}
+
+function renderWatchlist(data) {
+  if (!Array.isArray(data)) return '<div class="empty-state">No data</div>';
+  return data.map(w => `
+    <div class="watchlist-item">
+      <div class="watch-icon">▶</div>
+      <div class="watch-text"><strong>${esc(w.trigger)}</strong> — ${esc(w.significance)}</div>
+    </div>`).join('');
+}
+
+// ─── UTILITY ───
+function esc(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// Run cooldown updater on load
+updateCooldownDisplays();
+setInterval(updateCooldownDisplays, 15000);
+</script>
+</body>
+</html>
