@@ -1,0 +1,2835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EVENFALL // Conflict Intelligence Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;500;600;700;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #000000;
+    --bg-secondary: #080808;
+    --bg-card: #0e0e0e;
+    --bg-card-hover: #141414;
+    --border: #1c1c1c;
+    --border-bright: #2a2a2a;
+    --text-primary: #dde6f0;
+    --text-secondary: #8fa3b8;
+    --text-dim: #4a5e72;
+    --accent-blue: #1e7fcb;
+    --accent-blue-bright: #2d9de8;
+    --accent-amber: #d4890a;
+    --accent-amber-bright: #f0a020;
+    --accent-red: #c0392b;
+    --accent-red-bright: #e74c3c;
+    --accent-green: #1a7a4a;
+    --accent-green-bright: #27ae60;
+    --accent-purple: #6c3483;
+    --accent-orange: #e8600a;
+    --accent-orange-bright: #ff7a1a;
+    --confirmed: #27ae60;
+    --unconfirmed: #d4890a;
+    --signal: #e74c3c;
+    --osint-accent: #c084fc;
+    --osint-dim: #7c3aed;
+    --mono: 'Share Tech Mono', monospace;
+    --sans: 'Barlow Condensed', sans-serif;
+    --body: 'Barlow', sans-serif;
+    --daily-cap: 10.00;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--body);
+    font-size: 21px;
+    line-height: 1.5;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── AUTH SCREEN ── */
+  #auth-screen {
+    position: fixed; inset: 0;
+    background: var(--bg-primary);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+    flex-direction: column;
+    gap: 32px;
+    text-align: center;
+  }
+
+  .auth-logo {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 48px;
+    letter-spacing: 12px;
+    color: var(--accent-orange-bright);
+    text-transform: uppercase;
+    position: relative;
+    text-align: center;
+    width: 100%;
+  }
+
+  .auth-logo::after {
+    content: 'CONFLICT INTELLIGENCE MONITOR';
+    display: block;
+    font-size: 15px;
+    letter-spacing: 6px;
+    color: var(--text-dim);
+    font-weight: 400;
+    text-align: center;
+    margin-top: 6px;
+  }
+
+  .auth-divider {
+    width: 200px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-bright), transparent);
+  }
+
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    width: 320px;
+  }
+
+  .auth-label {
+    font-family: var(--mono);
+    font-size: 16px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    align-self: flex-start;
+  }
+
+  .auth-input {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: var(--mono);
+    font-size: 15px;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+    letter-spacing: 2px;
+  }
+
+  .auth-input:focus { border-color: var(--accent-blue); }
+
+  .auth-btn {
+    width: 100%;
+    background: var(--accent-blue);
+    border: none;
+    color: white;
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    padding: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 4px;
+  }
+
+  .auth-btn:hover { background: var(--accent-blue-bright); }
+
+  .auth-error {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--accent-red-bright);
+    letter-spacing: 1px;
+    display: none;
+  }
+
+  /* ── MAIN APP ── */
+  #app { display: none; }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .brand {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 17px;
+    letter-spacing: 5px;
+    color: var(--accent-orange-bright);
+    text-transform: uppercase;
+  }
+
+  .conflict-tag {
+    font-family: var(--mono);
+    font-size: 15px;
+    letter-spacing: 2px;
+    color: var(--accent-red-bright);
+    background: rgba(192,57,43,0.12);
+    border: 1px solid rgba(192,57,43,0.3);
+    padding: 3px 8px;
+    text-transform: uppercase;
+    animation: pulse-red 2s infinite;
+  }
+
+  @keyframes pulse-red {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .spend-tracker {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .spend-amount {
+    color: var(--accent-amber-bright);
+    font-weight: bold;
+  }
+
+  .spend-bar {
+    width: 80px;
+    height: 3px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .spend-fill {
+    height: 100%;
+    background: var(--accent-amber);
+    transition: width 0.5s;
+    width: 0%;
+  }
+
+  .utc-clock {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+  }
+
+  /* Auto sync toggle */
+  .autosync-toggle {
+    font-family: var(--mono);
+    font-size: 16px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: transparent;
+    border: 1px solid var(--accent-green);
+    color: var(--accent-green-bright);
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .autosync-toggle.off {
+    border-color: var(--border-bright);
+    color: var(--text-dim);
+  }
+
+  .autosync-toggle .sync-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent-green-bright);
+    transition: background 0.2s;
+  }
+
+  .autosync-toggle.off .sync-dot {
+    background: var(--text-dim);
+  }
+
+  .refresh-all-btn {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    background: transparent;
+    border: 1px solid var(--accent-blue);
+    color: var(--accent-blue);
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .refresh-all-btn:hover {
+    background: var(--accent-blue);
+    color: white;
+  }
+
+  .refresh-all-btn:disabled {
+    border-color: var(--border);
+    color: var(--text-dim);
+    cursor: not-allowed;
+  }
+
+  /* ── API KEY BANNER ── */
+  #api-banner {
+    background: rgba(212,137,10,0.08);
+    border-bottom: 1px solid rgba(212,137,10,0.3);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #api-banner label {
+    font-family: var(--mono);
+    font-size: 16px;
+    letter-spacing: 2px;
+    color: var(--accent-amber-bright);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  #api-key-input {
+    flex: 1;
+    max-width: 440px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: var(--mono);
+    font-size: 15px;
+    padding: 6px 12px;
+    outline: none;
+    letter-spacing: 1px;
+    -webkit-text-security: disc;
+  }
+
+  #api-key-input:hover, #api-key-input:focus {
+    -webkit-text-security: none;
+    border-color: var(--accent-amber);
+  }
+
+  #save-key-btn {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: var(--accent-amber);
+    border: none;
+    color: black;
+    padding: 7px 16px;
+    cursor: pointer;
+  }
+
+  #api-status {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--accent-green-bright);
+    letter-spacing: 1px;
+  }
+
+  /* ── DAILY CAP WARNING ── */
+  #cap-warning {
+    display: none;
+    background: rgba(192,57,43,0.12);
+    border-bottom: 1px solid rgba(192,57,43,0.4);
+    padding: 10px 20px;
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--accent-red-bright);
+    letter-spacing: 1px;
+    text-align: center;
+  }
+
+  /* ── LAYOUT ── */
+  .main-layout {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    grid-template-rows: auto;
+    gap: 0;
+    min-height: calc(100vh - 48px);
+  }
+
+  .left-column {
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .right-column {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── SECTION HEADERS ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+  }
+
+  .section-title {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 16px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+  }
+
+  .section-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .last-updated {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .refresh-btn {
+    font-family: var(--mono);
+    font-size: 15px;
+    letter-spacing: 1px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  .refresh-btn:hover {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+  }
+
+  .refresh-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .cooldown-text {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--text-dim);
+  }
+
+  /* ── LOADING STATE ── */
+  .loading-indicator {
+    display: none;
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--accent-blue);
+    letter-spacing: 2px;
+    animation: blink 1s infinite;
+    padding: 20px 16px;
+    text-align: center;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .section-content {
+    padding: 14px 16px;
+    min-height: 80px;
+  }
+
+  .empty-state {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-align: center;
+    padding: 20px;
+  }
+
+  /* ── DUAL FEED PANEL ── */
+  .dual-feed {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .feed-pane {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .feed-pane:first-child {
+    border-right: 1px solid var(--border);
+  }
+
+  .feed-scroll {
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  .feed-scroll::-webkit-scrollbar { width: 3px; }
+  .feed-scroll::-webkit-scrollbar-track { background: var(--bg-primary); }
+  .feed-scroll::-webkit-scrollbar-thumb { background: var(--border-bright); }
+
+  /* ── HEADLINE FEED ── */
+  .headline-list { list-style: none; }
+
+  .headline-item {
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(30,45,61,0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: background 0.15s;
+  }
+
+  .headline-item:hover { background: var(--bg-card-hover); }
+  .headline-item:last-child { border-bottom: none; }
+
+  .headline-item-top {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .headline-badge {
+    font-family: var(--mono);
+    font-size: 16px;
+    letter-spacing: 1px;
+    padding: 2px 5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .badge-confirmed {
+    background: rgba(39,174,96,0.15);
+    border: 1px solid rgba(39,174,96,0.4);
+    color: var(--confirmed);
+  }
+
+  .badge-unconfirmed {
+    background: rgba(212,137,10,0.15);
+    border: 1px solid rgba(212,137,10,0.4);
+    color: var(--unconfirmed);
+  }
+
+  .badge-developing {
+    background: rgba(30,127,203,0.15);
+    border: 1px solid rgba(30,127,203,0.4);
+    color: var(--accent-blue-bright);
+    animation: pulse-blue 2s infinite;
+  }
+
+  @keyframes pulse-blue {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .badge-signal {
+    background: rgba(231,76,60,0.15);
+    border: 1px solid rgba(231,76,60,0.4);
+    color: var(--signal);
+    animation: pulse-red 1.5s infinite;
+  }
+
+  .headline-time {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--accent-amber-bright);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .headline-source {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .headline-text {
+    font-size: 16px;
+    color: var(--text-primary);
+    line-height: 1.4;
+  }
+
+  /* ── OSINT SIGNALS PANEL ── */
+  .osint-header {
+    background: rgba(109,40,217,0.06);
+    border-bottom: 1px solid rgba(109,40,217,0.25);
+  }
+
+  .osint-header .section-title {
+    color: var(--osint-accent);
+  }
+
+  .osint-list { list-style: none; }
+
+  .osint-item {
+    padding: 7px 14px;
+    border-bottom: 1px solid rgba(109,40,217,0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    transition: background 0.15s;
+  }
+
+  .osint-item:hover { background: rgba(109,40,217,0.04); }
+  .osint-item:last-child { border-bottom: none; }
+
+  .osint-item-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .osint-channel {
+    font-family: var(--mono);
+    font-size: 16px;
+    letter-spacing: 1px;
+    padding: 2px 5px;
+    background: rgba(109,40,217,0.15);
+    border: 1px solid rgba(109,40,217,0.35);
+    color: var(--osint-accent);
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .osint-time {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--accent-orange-bright);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .osint-badge {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 1px 4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .osint-badge-signal {
+    background: rgba(231,76,60,0.12);
+    border: 1px solid rgba(231,76,60,0.3);
+    color: var(--signal);
+  }
+
+  .osint-badge-watch {
+    background: rgba(212,137,10,0.12);
+    border: 1px solid rgba(212,137,10,0.3);
+    color: var(--unconfirmed);
+  }
+
+  .osint-badge-unverified {
+    background: rgba(61,81,102,0.3);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+
+  .osint-text {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  .osint-text strong {
+    color: var(--text-primary);
+    font-weight: normal;
+  }
+
+  .osint-loading {
+    display: none;
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--osint-accent);
+    letter-spacing: 2px;
+    animation: blink 1s infinite;
+    padding: 20px 14px;
+    text-align: center;
+  }
+
+  /* ── ESCALATION METER ── */
+  .escalation-bar-container {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-card);
+  }
+
+  .escalation-label {
+    font-family: var(--mono);
+    font-size: 15px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .escalation-level-text {
+    color: var(--accent-red-bright);
+    font-weight: bold;
+  }
+
+  .escalation-track {
+    width: 100%;
+    height: 6px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .escalation-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #27ae60, #d4890a, #e74c3c);
+    transition: width 1s ease;
+    width: 0%;
+  }
+
+  .escalation-markers {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--text-dim);
+  }
+
+  /* ── ACTOR CARDS ── */
+  .actors-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .actor-card {
+    background: var(--bg-card);
+    padding: 12px 14px;
+  }
+
+  .actor-name {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 15px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+
+  .actor-role {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .actor-posture {
+    font-family: var(--mono);
+    font-size: 15px;
+    padding: 3px 7px;
+    display: inline-block;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .posture-offensive { background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.4); color: var(--accent-red-bright); }
+  .posture-defensive { background: rgba(26,122,74,0.15); border: 1px solid rgba(26,122,74,0.4); color: var(--accent-green-bright); }
+  .posture-retaliating { background: rgba(212,137,10,0.15); border: 1px solid rgba(212,137,10,0.4); color: var(--accent-amber-bright); }
+  .posture-monitoring { background: rgba(30,127,203,0.15); border: 1px solid rgba(30,127,203,0.4); color: var(--accent-blue-bright); }
+  .posture-unknown { background: rgba(61,81,102,0.3); border: 1px solid var(--border); color: var(--text-dim); }
+
+  .actor-last-action {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin-bottom: 6px;
+  }
+
+  .actor-label {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+
+  /* ── MILITARY SECTION ── */
+  .military-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .military-card {
+    background: var(--bg-card);
+    padding: 12px 14px;
+  }
+
+  .military-card-title {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 15px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .strike-item {
+    display: flex;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(30,45,61,0.4);
+    align-items: flex-start;
+  }
+
+  .strike-item:last-child { border-bottom: none; }
+
+  .strike-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  .dot-red { background: var(--accent-red-bright); }
+  .dot-amber { background: var(--accent-amber-bright); }
+  .dot-blue { background: var(--accent-blue-bright); }
+  .dot-green { background: var(--accent-green-bright); }
+
+  .strike-text { font-size: 15px; color: var(--text-secondary); line-height: 1.4; }
+  .strike-text strong { color: var(--text-primary); font-weight: 500; }
+
+  /* ── PROXY SECTION ── */
+  .proxy-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .proxy-card {
+    background: var(--bg-card);
+    padding: 12px 14px;
+  }
+
+  .proxy-name {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 16px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .proxy-status-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+  }
+
+  .proxy-activity {
+    font-family: var(--mono);
+    font-size: 16px;
+    padding: 2px 6px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .activity-high { background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.4); color: var(--accent-red-bright); }
+  .activity-medium { background: rgba(212,137,10,0.15); border: 1px solid rgba(212,137,10,0.4); color: var(--accent-amber-bright); }
+  .activity-low { background: rgba(26,122,74,0.15); border: 1px solid rgba(26,122,74,0.4); color: var(--accent-green-bright); }
+  .activity-unknown { background: rgba(61,81,102,0.3); border: 1px solid var(--border); color: var(--text-dim); }
+
+  .proxy-desc { font-size: 15px; color: var(--text-secondary); line-height: 1.4; }
+
+  /* ── GAME THEORY ── */
+  #game-theory-section { border-bottom: 1px solid var(--border); }
+
+  .gt-content { padding: 14px 16px; }
+
+  .gt-actor-block {
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .gt-actor-block:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .gt-actor-name {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 15px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent-blue-bright);
+    margin-bottom: 5px;
+  }
+
+  .gt-logic {
+    font-size: 16px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .gt-dominant {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--accent-amber-bright);
+    margin-top: 6px;
+    padding: 5px 8px;
+    background: rgba(212,137,10,0.07);
+    border-left: 2px solid var(--accent-amber);
+  }
+
+  /* ── RIGHT COLUMN SECTIONS ── */
+  .right-section { border-bottom: 1px solid var(--border); }
+
+  /* ── LEADERSHIP STATUS ── */
+  .leader-item {
+    padding: 9px 14px;
+    border-bottom: 1px solid rgba(30,45,61,0.5);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .leader-item:last-child { border-bottom: none; }
+
+  .leader-left { flex: 1; }
+  .leader-name { font-family: var(--mono); font-weight: bold; font-size: 15px; letter-spacing: 1px; }
+  .leader-title { font-family: var(--mono); font-size: 16px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; }
+  .leader-note { font-size: 16px; color: var(--text-secondary); margin-top: 2px; }
+
+  .leader-status {
+    font-family: var(--mono);
+    font-size: 16px;
+    padding: 3px 7px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .status-active { background: rgba(39,174,96,0.15); border: 1px solid rgba(39,174,96,0.4); color: var(--confirmed); }
+  .status-unknown { background: rgba(212,137,10,0.15); border: 1px solid rgba(212,137,10,0.4); color: var(--unconfirmed); animation: pulse-red 2s infinite; }
+  .status-dead { background: rgba(61,81,102,0.3); border: 1px solid var(--border); color: var(--text-dim); }
+  .status-unconfirmed-dead { background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.4); color: var(--signal); animation: pulse-red 1.5s infinite; }
+
+  /* ── STRAIT STATUS ── */
+  .strait-display { padding: 12px 14px; }
+
+  .strait-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .strait-name {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 15px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .strait-badge {
+    font-family: var(--mono);
+    font-size: 15px;
+    padding: 4px 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .strait-open { background: rgba(39,174,96,0.15); border: 1px solid rgba(39,174,96,0.4); color: var(--confirmed); }
+  .strait-threatened { background: rgba(212,137,10,0.15); border: 1px solid rgba(212,137,10,0.4); color: var(--unconfirmed); }
+  .strait-closed { background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.4); color: var(--signal); animation: pulse-red 1s infinite; }
+
+  .strait-context { font-size: 15px; color: var(--text-secondary); line-height: 1.4; }
+
+  /* ── MARKET DATA ── */
+  .market-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .market-item {
+    background: var(--bg-card);
+    padding: 10px 12px;
+  }
+
+  .market-name {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .market-price {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--text-primary);
+    font-weight: bold;
+  }
+
+  .market-change {
+    font-family: var(--mono);
+    font-size: 16px;
+    margin-top: 1px;
+  }
+
+  .change-up { color: var(--accent-green-bright); }
+  .change-down { color: var(--accent-red-bright); }
+  .change-neutral { color: var(--text-dim); }
+
+  .market-note { font-size: 15px; color: var(--text-dim); margin-top: 2px; }
+
+  /* ── HUMANITARIAN ── */
+  .humanitarian-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    margin-bottom: 1px;
+  }
+
+  .stat-box {
+    background: var(--bg-card);
+    padding: 10px 12px;
+  }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .stat-value {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--text-primary);
+  }
+
+  .stat-qualifier {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--unconfirmed);
+    letter-spacing: 1px;
+  }
+
+  /* ── WILDCARD ── */
+  .wildcard-list { list-style: none; }
+
+  .wildcard-item {
+    padding: 9px 14px;
+    border-bottom: 1px solid rgba(30,45,61,0.4);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .wildcard-item:last-child { border-bottom: none; }
+
+  .wc-probability {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--accent-amber-bright);
+    flex-shrink: 0;
+    width: 36px;
+    text-align: right;
+    margin-top: 1px;
+  }
+
+  .wc-text { flex: 1; }
+  .wc-title { font-size: 15px; color: var(--text-primary); font-weight: 500; margin-bottom: 2px; }
+  .wc-desc { font-size: 16px; color: var(--text-secondary); line-height: 1.4; }
+
+  .wc-impact {
+    font-family: var(--mono);
+    font-size: 16px;
+    padding: 2px 5px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .impact-critical { background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.4); color: var(--signal); }
+  .impact-high { background: rgba(212,137,10,0.15); border: 1px solid rgba(212,137,10,0.4); color: var(--unconfirmed); }
+
+  /* ── MEDIA FRAMING ── */
+  .framing-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .framing-col {
+    background: var(--bg-card);
+    padding: 10px 12px;
+  }
+
+  .framing-source {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 15px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .framing-point {
+    font-size: 16px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 4px;
+    padding-left: 8px;
+    border-left: 2px solid var(--border);
+  }
+
+  /* ── TIMELINE ── */
+  .timeline-list { list-style: none; }
+
+  .timeline-item {
+    display: flex;
+    gap: 0;
+    position: relative;
+  }
+
+  .timeline-left {
+    width: 110px;
+    flex-shrink: 0;
+    padding: 10px 12px 10px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+
+  .timeline-date {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+    text-align: right;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.3;
+  }
+
+  .timeline-connector {
+    position: absolute;
+    left: 110px;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: var(--border);
+  }
+
+  .timeline-node {
+    position: absolute;
+    left: 106px;
+    top: 14px;
+    width: 9px; height: 9px;
+    background: var(--bg-primary);
+    border: 2px solid var(--accent-blue);
+    border-radius: 50%;
+    z-index: 1;
+  }
+
+  .timeline-node.node-red { border-color: var(--accent-red-bright); }
+  .timeline-node.node-amber { border-color: var(--accent-amber-bright); }
+
+  .timeline-right {
+    padding: 10px 14px 10px 20px;
+    flex: 1;
+  }
+
+  .timeline-event {
+    font-size: 15px;
+    color: var(--text-primary);
+    line-height: 1.4;
+    margin-bottom: 2px;
+  }
+
+  .timeline-detail {
+    font-size: 16px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  /* ── DIPLO SECTION ── */
+  .diplo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .diplo-card {
+    background: var(--bg-card);
+    padding: 11px 14px;
+  }
+
+  .diplo-country {
+    font-family: var(--mono);
+    font-weight: bold;
+    font-size: 16px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .diplo-stance {
+    font-family: var(--mono);
+    font-size: 16px;
+    padding: 2px 6px;
+    display: inline-block;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+
+  .stance-against { background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.4); color: var(--signal); }
+  .stance-neutral { background: rgba(61,81,102,0.3); border: 1px solid var(--border); color: var(--text-secondary); }
+  .stance-support { background: rgba(39,174,96,0.15); border: 1px solid rgba(39,174,96,0.4); color: var(--confirmed); }
+  .stance-watching { background: rgba(30,127,203,0.15); border: 1px solid rgba(30,127,203,0.4); color: var(--accent-blue-bright); }
+
+  .diplo-note { font-size: 16px; color: var(--text-secondary); line-height: 1.4; }
+
+  /* ── WATCHLIST ── */
+  .watchlist-item {
+    padding: 9px 14px;
+    border-bottom: 1px solid rgba(30,45,61,0.4);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .watchlist-item:last-child { border-bottom: none; }
+
+  .watch-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: var(--accent-amber-bright);
+  }
+
+  .watch-text { flex: 1; font-size: 15px; color: var(--text-secondary); line-height: 1.4; }
+  .watch-text strong { color: var(--text-primary); }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg-primary); }
+  ::-webkit-scrollbar-thumb { background: var(--border-bright); }
+
+  /* ── AUDIT LOG DRAWER ── */
+  #audit-drawer {
+    display: none;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .audit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .audit-title { font-family: var(--mono); font-size: 15px; letter-spacing: 3px; color: var(--text-dim); text-transform: uppercase; }
+  .audit-clear { font-family: var(--mono); font-size: 15px; color: var(--text-dim); background: none; border: none; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; }
+  .audit-clear:hover { color: var(--accent-red-bright); }
+
+  .audit-entry {
+    display: grid;
+    grid-template-columns: 80px 110px 80px 65px 1fr;
+    gap: 10px;
+    padding: 5px 20px;
+    border-bottom: 1px solid rgba(28,28,28,0.5);
+    font-family: var(--mono);
+    font-size: 16px;
+    align-items: center;
+  }
+
+  .audit-entry:hover { background: var(--bg-card); }
+  .audit-time { color: var(--text-dim); }
+  .audit-section { color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+  .audit-tokens { color: var(--accent-blue-bright); }
+  .audit-cost { color: var(--accent-amber-bright); }
+  .audit-status-ok { color: var(--confirmed); }
+  .audit-status-err { color: var(--signal); }
+  .audit-empty { padding: 14px 20px; font-family: var(--mono); font-size: 16px; color: var(--text-dim); letter-spacing: 1px; text-align: center; }
+
+  /* ── SCROLLABLE SECTIONS ── */
+  .scroll-body { max-height: 340px; overflow-y: auto; }
+  .scroll-body::-webkit-scrollbar { width: 3px; }
+  .scroll-body::-webkit-scrollbar-track { background: var(--bg-primary); }
+  .scroll-body::-webkit-scrollbar-thumb { background: var(--border-bright); }
+
+  /* ── FRESHNESS INDICATOR ── */
+  .freshness-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    transition: background 0.5s;
+    background: var(--border);
+  }
+  .fresh-green  { background: var(--confirmed) !important; }
+  .fresh-amber  { background: var(--unconfirmed) !important; }
+  .fresh-red    { background: var(--signal) !important; }
+  .fresh-none   { background: var(--border) !important; }
+
+  /* ── GLOBAL REFRESH TIMER ── */
+  .refresh-timer {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+  .refresh-timer span { color: var(--accent-amber-bright); }
+
+  /* ── CONFIRM MODAL ── */
+  #confirm-modal {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .confirm-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-bright);
+    padding: 24px;
+    width: 320px;
+  }
+
+  .confirm-title {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .confirm-body {
+    font-size: 16px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+
+  .confirm-cost {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--accent-amber-bright);
+    margin-bottom: 16px;
+  }
+
+  .confirm-buttons { display: flex; gap: 8px; }
+
+  .confirm-yes {
+    flex: 1;
+    background: var(--accent-blue);
+    border: none;
+    color: white;
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 9px;
+    cursor: pointer;
+  }
+
+  .confirm-no {
+    flex: 1;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 9px;
+    cursor: pointer;
+  }
+
+  .section-body { overflow: hidden; }
+</style>
+</head>
+<body>
+
+<!-- ══ AUTH SCREEN ══ -->
+<div id="auth-screen">
+  <div class="auth-logo">EVENFALL</div>
+  <div class="auth-divider"></div>
+  <div class="auth-form">
+    <div class="auth-label">Access Code Required</div>
+    <input type="password" class="auth-input" id="password-input" placeholder="Enter access code" autocomplete="off">
+    <div class="auth-error" id="auth-error">INVALID ACCESS CODE</div>
+    <button class="auth-btn" onclick="checkPassword()">AUTHENTICATE</button>
+  </div>
+</div>
+
+<!-- ══ CONFIRM MODAL ══ -->
+<div id="confirm-modal">
+  <div class="confirm-box">
+    <div class="confirm-title">Confirm Refresh</div>
+    <div class="confirm-body" id="confirm-body">This will refresh all sections simultaneously.</div>
+    <div class="confirm-cost" id="confirm-cost">~$0.30–0.50 estimated cost</div>
+    <div class="confirm-buttons">
+      <button class="confirm-yes" id="confirm-yes-btn">Confirm</button>
+      <button class="confirm-no" onclick="closeConfirm()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MAIN APP ══ -->
+<div id="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="brand">EVEN<span>FALL</span></div>
+      <div class="conflict-tag">● LIVE — IRAN/US/ISRAEL</div>
+    </div>
+    <div class="topbar-right">
+      <div class="spend-tracker">
+        <span>SESSION</span>
+        <span class="spend-amount" id="spend-display">$0.000</span>
+        <div class="spend-bar"><div class="spend-fill" id="spend-fill"></div></div>
+        <span id="spend-cap-label">/ $10.00 daily cap</span>
+      </div>
+      <div class="refresh-timer">LAST SYNC <span id="sync-timer">—</span></div>
+      <div class="utc-clock" id="utc-clock">--:--:-- UTC</div>
+      <button class="topbar-btn" onclick="toggleAuditLog()" id="log-btn" style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;background:transparent;border:1px solid var(--border-bright);color:var(--text-dim);padding:5px 10px;cursor:pointer;transition:all 0.2s;">LOG</button>
+      <button class="autosync-toggle" id="autosync-btn" onclick="toggleAutoSync()">
+        <span class="sync-dot"></span>AUTO SYNC
+      </button>
+      <button class="refresh-all-btn" onclick="confirmRefreshAll()">↻ REFRESH ALL</button>
+    </div>
+  </div>
+
+  <!-- API KEY BANNER -->
+  <div id="api-banner">
+    <label>⚠ API KEY</label>
+    <input type="text" id="api-key-input" placeholder="sk-ant-api03-..." autocomplete="off">
+    <button id="save-key-btn" onclick="saveApiKey()">SAVE KEY</button>
+    <span id="api-status"></span>
+  </div>
+
+  <!-- DAILY CAP WARNING -->
+  <div id="cap-warning">⚠ DAILY SPENDING CAP REACHED — ALL REFRESHES DISABLED UNTIL MIDNIGHT UTC &nbsp;&nbsp; <button onclick="confirmResetCap()" style="font-family:var(--mono);font-size:11px;letter-spacing:1px;background:rgba(231,76,60,0.2);border:1px solid rgba(231,76,60,0.5);color:var(--accent-red-bright);padding:3px 10px;cursor:pointer;">RESET CAP</button></div>
+
+  <!-- CAP RESET MODAL -->
+  <div id="cap-reset-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9998;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-card);border:1px solid var(--border-bright);padding:24px;width:300px;">
+      <div style="font-family:var(--mono);font-size:12px;letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;color:var(--accent-red-bright)">RESET AUTHORIZATION</div>
+      <input type="password" id="cap-reset-input" placeholder="Enter code" autocomplete="off"
+        style="width:100%;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-family:var(--mono);font-size:14px;padding:9px 12px;outline:none;letter-spacing:4px;margin-bottom:10px;">
+      <div id="cap-reset-error" style="display:none;font-family:var(--mono);font-size:11px;color:var(--signal);margin-bottom:10px;">INVALID CODE</div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="submitResetCap()" style="flex:1;background:var(--accent-red);border:none;color:white;font-family:var(--sans);font-weight:700;font-size:12px;letter-spacing:3px;text-transform:uppercase;padding:9px;cursor:pointer;">CONFIRM</button>
+        <button onclick="closeResetCap()" style="flex:1;background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-family:var(--sans);font-weight:700;font-size:12px;letter-spacing:3px;text-transform:uppercase;padding:9px;cursor:pointer;">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUDIT LOG DRAWER -->
+  <div id="audit-drawer">
+    <div class="audit-header">
+      <span class="audit-title">AUDIT LOG — LAST 48H</span>
+      <button class="audit-clear" onclick="clearAuditLog()">CLEAR LOG</button>
+    </div>
+    <div id="audit-entries">
+      <div class="audit-empty">No entries yet.</div>
+    </div>
+  </div>
+
+  <!-- MAIN LAYOUT -->
+  <div class="main-layout">
+
+    <!-- ══ LEFT COLUMN ══ -->
+    <div class="left-column">
+
+      <!-- DUAL FEED: HEADLINES + OSINT SIGNALS -->
+      <div class="dual-feed">
+
+        <!-- LEFT: LIVE HEADLINE FEED -->
+        <div class="feed-pane">
+          <div class="section-header">
+            <div class="section-title">
+              <div class="dot" style="background:var(--accent-red-bright); animation: pulse-red 1.5s infinite;"></div>
+              LIVE HEADLINE FEED
+              <div class="freshness-dot fresh-none" id="fresh-headlines" title="Data age"></div>
+            </div>
+            <div class="section-meta">
+              <span class="last-updated" id="headlines-updated">NOT LOADED</span>
+              <span class="cooldown-text" id="headlines-cooldown"></span>
+              <button class="refresh-btn" id="headlines-btn" onclick="refreshSection('headlines')">↻</button>
+            </div>
+          </div>
+          <div class="osint-loading" id="headlines-loading">FETCHING WIRE SERVICES...</div>
+          <div class="feed-scroll" id="headlines-content">
+            <div class="empty-state">[ AWAITING INITIAL LOAD ]</div>
+          </div>
+        </div>
+
+        <!-- RIGHT: OSINT SIGNALS -->
+        <div class="feed-pane">
+          <div class="section-header osint-header">
+            <div class="section-title" style="color:var(--osint-accent)">
+              <div class="dot" style="background:var(--osint-accent); animation: pulse-red 2s infinite;"></div>
+              OSINT SIGNALS
+              <div class="freshness-dot fresh-none" id="fresh-osint" title="Data age"></div>
+            </div>
+            <div class="section-meta">
+              <span class="last-updated" id="osint-updated">NOT LOADED</span>
+              <span class="cooldown-text" id="osint-cooldown"></span>
+              <button class="refresh-btn" id="osint-btn" onclick="refreshSection('osint')" style="border-color:rgba(109,40,217,0.4);color:var(--osint-dim)">↻</button>
+            </div>
+          </div>
+          <div class="osint-loading" id="osint-loading">SCANNING TELEGRAM CHANNELS...</div>
+          <div class="feed-scroll" id="osint-content">
+            <div class="empty-state">[ AWAITING INITIAL LOAD ]</div>
+          </div>
+        </div>
+
+      </div><!-- /dual-feed -->
+
+      <!-- ESCALATION METER -->
+      <div class="escalation-bar-container">
+        <div class="escalation-label">
+          <span>ESCALATION INDEX</span>
+          <span class="escalation-level-text" id="escalation-text">— / 10</span>
+        </div>
+        <div class="escalation-track">
+          <div class="escalation-fill" id="escalation-fill"></div>
+        </div>
+        <div class="escalation-markers">
+          <span>CONTAINED</span><span>REGIONAL</span><span>EXPANDED</span><span>EXISTENTIAL</span>
+        </div>
+      </div>
+
+      <!-- ACTOR STATUS -->
+      <div>
+        <div class="section-header">
+          <div class="section-title"><div class="dot"></div>ACTOR STATUS<div class="freshness-dot fresh-none" id="fresh-actors" title="Data age"></div></div>
+          <div class="section-meta">
+            <span class="last-updated" id="actors-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="actors-cooldown"></span>
+            <button class="refresh-btn" id="actors-btn" onclick="refreshSection('actors')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="actors-loading">FETCHING INTELLIGENCE...</div>
+        <div id="actors-content">
+          <div class="actors-grid">
+            <div class="actor-card"><div class="empty-state">—</div></div>
+            <div class="actor-card"><div class="empty-state">—</div></div>
+            <div class="actor-card"><div class="empty-state">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MILITARY OPERATIONS -->
+      <div>
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--accent-red-bright)"></div>MILITARY OPERATIONS<div class="freshness-dot fresh-none" id="fresh-military" title="Data age"></div></div>
+          <div class="section-meta">
+            <span class="last-updated" id="military-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="military-cooldown"></span>
+            <button class="refresh-btn" id="military-btn" onclick="refreshSection('military')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="military-loading">FETCHING INTELLIGENCE...</div>
+        <div id="military-content"><div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div></div>
+      </div>
+
+      <!-- PROXY & REGIONAL ACTORS -->
+      <div>
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--accent-amber-bright)"></div>PROXY & REGIONAL ACTORS<div class="freshness-dot fresh-none" id="fresh-proxy" title="Data age"></div></div>
+          <div class="section-meta">
+            <span class="last-updated" id="proxy-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="proxy-cooldown"></span>
+            <button class="refresh-btn" id="proxy-btn" onclick="refreshSection('proxy')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="proxy-loading">FETCHING INTELLIGENCE...</div>
+        <div id="proxy-content"><div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div></div>
+      </div>
+
+      <!-- DIPLOMATIC LANDSCAPE -->
+      <div>
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--accent-blue-bright)"></div>DIPLOMATIC LANDSCAPE<div class="freshness-dot fresh-none" id="fresh-diplo" title="Data age"></div></div>
+          <div class="section-meta">
+            <span class="last-updated" id="diplo-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="diplo-cooldown"></span>
+            <button class="refresh-btn" id="diplo-btn" onclick="refreshSection('diplo')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="diplo-loading">FETCHING INTELLIGENCE...</div>
+        <div id="diplo-content"><div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div></div>
+      </div>
+
+      <!-- HUMANITARIAN DATA -->
+      <div>
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:#e67e22"></div>HUMANITARIAN DATA<div class="freshness-dot fresh-none" id="fresh-humanitarian" title="Data age"></div></div>
+          <div class="section-meta">
+            <span class="last-updated" id="humanitarian-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="humanitarian-cooldown"></span>
+            <button class="refresh-btn" id="humanitarian-btn" onclick="refreshSection('humanitarian')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="humanitarian-loading">FETCHING INTELLIGENCE...</div>
+        <div id="humanitarian-content"><div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div></div>
+      </div>
+
+      <!-- MEDIA FRAMING -->
+      <div>
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--accent-purple)"></div>MEDIA FRAMING COMPARISON<div class="freshness-dot fresh-none" id="fresh-media" title="Data age"></div></div>
+          <div class="section-meta">
+            <span class="last-updated" id="media-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="media-cooldown"></span>
+            <button class="refresh-btn" id="media-btn" onclick="refreshSection('media')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="media-loading">FETCHING INTELLIGENCE...</div>
+        <div id="media-content"><div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div></div>
+      </div>
+
+      <!-- CONFLICT TIMELINE -->
+      <div>
+        <div class="section-header">
+          <div class="section-title"><div class="dot"></div>CONFLICT CHRONOLOGY<div class="freshness-dot fresh-none" id="fresh-timeline" title="Data age"></div></div>
+          <div class="section-meta">
+            <span class="last-updated" id="timeline-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="timeline-cooldown"></span>
+            <button class="refresh-btn" id="timeline-btn" onclick="refreshSection('timeline')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="timeline-loading">FETCHING INTELLIGENCE...</div>
+        <div class="scroll-body"><div id="timeline-content">
+          <div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div>
+        </div></div>
+      </div>
+
+    </div><!-- /left-column -->
+
+    <!-- ══ RIGHT COLUMN ══ -->
+    <div class="right-column">
+
+      <!-- GAME THEORY ASSESSMENT -->
+      <div id="game-theory-section" class="right-section">
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--accent-amber-bright)"></div>GAME THEORY ASSESSMENT<div class="freshness-dot fresh-none" id="fresh-gt" title="Data age"></div></div>
+          <div class="section-meta">
+            <span class="last-updated" id="gt-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="gt-cooldown"></span>
+            <button class="refresh-btn" id="gt-btn" onclick="refreshSection('gt')">↻ ANALYZE</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="gt-loading">RUNNING GAME THEORY ANALYSIS...</div>
+        <div id="gt-content">
+          <div class="empty-state" style="padding:20px">[ CLICK ANALYZE TO RUN ]</div>
+        </div>
+      </div>
+
+      <!-- LEADERSHIP STATUS -->
+      <div class="right-section">
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--signal); animation:pulse-red 1.5s infinite"></div>LEADERSHIP STATUS<div class="freshness-dot fresh-none" id="fresh-leaders" title="Data age"></div></div>
+          <div class="section-meta">
+            <span class="last-updated" id="leaders-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="leaders-cooldown"></span>
+            <button class="refresh-btn" id="leaders-btn" onclick="refreshSection('leaders')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="leaders-loading">FETCHING INTELLIGENCE...</div>
+        <div id="leaders-content"><div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div></div>
+      </div>
+
+      <!-- STRAIT OF HORMUZ -->
+      <div class="right-section">
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--accent-blue-bright)"></div>STRAIT OF HORMUZ<div class="freshness-dot fresh-none" id="fresh-strait" title="Data age"></div></div>
+          <div class="section-meta">
+            <span class="last-updated" id="strait-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="strait-cooldown"></span>
+            <button class="refresh-btn" id="strait-btn" onclick="refreshSection('strait')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="strait-loading">FETCHING INTELLIGENCE...</div>
+        <div id="strait-content"><div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div></div>
+      </div>
+
+      <!-- MARKET IMPACT -->
+      <div class="right-section">
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--accent-green-bright)"></div>MARKET IMPACT<div class="freshness-dot fresh-none" id="fresh-market" title="Data age"></div></div>
+          <div class="section-meta">
+            <span class="last-updated" id="market-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="market-cooldown"></span>
+            <button class="refresh-btn" id="market-btn" onclick="refreshSection('market')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="market-loading">FETCHING INTELLIGENCE...</div>
+        <div id="market-content"><div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div></div>
+      </div>
+
+      <!-- WILDCARD / BLACK SWAN -->
+      <div class="right-section">
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--signal)"></div>WILDCARD / BLACK SWAN<div class="freshness-dot fresh-none" id="fresh-wildcard" title="Data age"></div></div>
+          <div class="section-meta">
+            <span class="last-updated" id="wildcard-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="wildcard-cooldown"></span>
+            <button class="refresh-btn" id="wildcard-btn" onclick="refreshSection('wildcard')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="wildcard-loading">FETCHING INTELLIGENCE...</div>
+        <div class="scroll-body"><div id="wildcard-content">
+          <div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div>
+        </div></div>
+      </div>
+
+      <!-- TRIPWIRES -->
+      <div class="right-section">
+        <div class="section-header">
+          <div class="section-title"><div class="dot" style="background:var(--accent-amber-bright)"></div>TRIPWIRES — WHAT TO WATCH<div class="freshness-dot fresh-none" id="fresh-watchlist" title="Data age"></div></div>
+          <div class="section-meta">
+            <span class="last-updated" id="watchlist-updated">NOT LOADED</span>
+            <span class="cooldown-text" id="watchlist-cooldown"></span>
+            <button class="refresh-btn" id="watchlist-btn" onclick="refreshSection('watchlist')">↻ REFRESH</button>
+          </div>
+        </div>
+        <div class="loading-indicator" id="watchlist-loading">FETCHING INTELLIGENCE...</div>
+        <div class="scroll-body"><div id="watchlist-content">
+          <div class="empty-state" style="padding:20px">[ AWAITING INITIAL LOAD ]</div>
+        </div></div>
+      </div>
+
+    </div><!-- /right-column -->
+  </div><!-- /main-layout -->
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// EVENFALL V6 — CONFLICT INTELLIGENCE MONITOR
+// ═══════════════════════════════════════════════════════════════
+
+const PASSWORD = "Furefurecontralucemmorientem$";
+const DAILY_CAP = 10.00;
+const PROXY_URL = 'https://evenfall-proxy.bobby-li0828.workers.dev/';
+const OSINT_URL = 'https://evenfall-proxy.bobby-li0828.workers.dev/osint';
+
+const MAX_TOKENS = {
+  headlines: 900,  actors: 1200, military: 1200, proxy: 1000,
+  diplo: 1000, humanitarian: 900,  media: 900,  timeline: 1400,
+  gt: 1800, leaders: 1000, strait: 800,  market: 700,
+  wildcard: 900,  watchlist: 900,  osint: 1200
+};
+
+const COST_PER_1K_INPUT = 0.003;
+const COST_PER_1K_OUTPUT = 0.015;
+
+// 30s spam guard on all sections
+const COOLDOWNS = {
+  headlines:    30 * 1000,
+  osint:        30 * 1000,
+  actors:       30 * 1000,
+  military:     30 * 1000,
+  proxy:        30 * 1000,
+  diplo:        30 * 1000,
+  humanitarian: 30 * 1000,
+  media:        30 * 1000,
+  timeline:     30 * 1000,
+  gt:           30 * 1000,
+  leaders:      30 * 1000,
+  strait:       30 * 1000,
+  market:       30 * 1000,
+  wildcard:     30 * 1000,
+  watchlist:    30 * 1000,
+};
+
+// All sections for full sync (includes osint and gt)
+const ALL_SECTIONS = ['headlines','osint','leaders','military','actors','proxy','strait','market','diplo','humanitarian','wildcard','watchlist','media','timeline','gt'];
+
+// State
+let apiKey = localStorage.getItem('evenfall_apikey') || '';
+let sessionSpend = 0;
+let dailySpend = parseFloat(localStorage.getItem('evenfall_daily_spend') || '0');
+let dailySpendDate = localStorage.getItem('evenfall_daily_date') || '';
+let lastRefresh = {};
+let sectionData = {};
+let confirmCallback = null;
+let lastSyncTime = 0;
+let autoSyncEnabled = localStorage.getItem('evenfall_autosync') !== 'off';
+
+let auditLog = JSON.parse(localStorage.getItem('evenfall_audit') || '[]');
+
+// ─── AUTH ───
+function checkPassword() {
+  const val = document.getElementById('password-input').value;
+  if (val === PASSWORD) {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    initApp();
+  } else {
+    document.getElementById('auth-error').style.display = 'block';
+    document.getElementById('password-input').value = '';
+    document.getElementById('password-input').focus();
+  }
+}
+
+document.getElementById('password-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkPassword();
+});
+
+// ─── AUTO SYNC TOGGLE ───
+function toggleAutoSync() {
+  autoSyncEnabled = !autoSyncEnabled;
+  localStorage.setItem('evenfall_autosync', autoSyncEnabled ? 'on' : 'off');
+  updateAutoSyncUI();
+}
+
+function updateAutoSyncUI() {
+  const btn = document.getElementById('autosync-btn');
+  if (!btn) return;
+  if (autoSyncEnabled) {
+    btn.classList.remove('off');
+    btn.title = 'Auto sync ON — click to disable';
+  } else {
+    btn.classList.add('off');
+    btn.title = 'Auto sync OFF — click to enable';
+  }
+}
+
+// ─── AUDIT LOG ───
+function pruneAuditLog() {
+  const cutoff = Date.now() - (48 * 60 * 60 * 1000);
+  auditLog = auditLog.filter(e => e.ts > cutoff);
+  localStorage.setItem('evenfall_audit', JSON.stringify(auditLog));
+}
+
+function addAuditEntry(section, inputTokens, outputTokens, cost) {
+  const entry = {
+    ts: Date.now(),
+    time: new Date().toISOString().replace('T',' ').substring(0,19),
+    section,
+    tokens: inputTokens + outputTokens,
+    cost: cost.toFixed(4),
+    status: 'OK'
+  };
+  auditLog.unshift(entry);
+  if (auditLog.length > 200) auditLog = auditLog.slice(0, 200);
+  localStorage.setItem('evenfall_audit', JSON.stringify(auditLog));
+  renderAuditLog();
+}
+
+function addAuditError(section, msg) {
+  const entry = { ts: Date.now(), time: new Date().toISOString().replace('T',' ').substring(0,19), section, tokens: 0, cost: '0.0000', status: 'ERR: ' + (msg||'').substring(0,20) };
+  auditLog.unshift(entry);
+  if (auditLog.length > 200) auditLog = auditLog.slice(0,200);
+  localStorage.setItem('evenfall_audit', JSON.stringify(auditLog));
+  renderAuditLog();
+}
+
+function renderAuditLog() {
+  const el = document.getElementById('audit-entries');
+  if (!el) return;
+  if (!auditLog.length) { el.innerHTML = '<div class="audit-empty">No entries yet.</div>'; return; }
+  el.innerHTML = auditLog.map(e => `
+    <div class="audit-entry">
+      <span class="audit-time">${e.time.split(' ')[1]||''}</span>
+      <span class="audit-section">${e.section}</span>
+      <span class="audit-tokens">${(e.tokens||0).toLocaleString()} tok</span>
+      <span class="audit-cost">$${e.cost}</span>
+      <span class="${e.status==='OK'?'audit-status-ok':'audit-status-err'}">${e.status}</span>
+    </div>`).join('');
+}
+
+function clearAuditLog() {
+  auditLog = [];
+  localStorage.setItem('evenfall_audit', '[]');
+  renderAuditLog();
+}
+
+function toggleAuditLog() {
+  const d = document.getElementById('audit-drawer');
+  const btn = document.getElementById('log-btn');
+  const vis = d.style.display === 'block';
+  d.style.display = vis ? 'none' : 'block';
+  if (btn) { btn.style.color = vis ? '' : 'var(--accent-blue)'; btn.style.borderColor = vis ? '' : 'var(--accent-blue)'; }
+}
+
+// ─── INIT ───
+function initApp() {
+  const today = new Date().toISOString().split('T')[0];
+  if (dailySpendDate !== today) {
+    dailySpend = 0;
+    localStorage.setItem('evenfall_daily_spend', '0');
+    localStorage.setItem('evenfall_daily_date', today);
+    dailySpendDate = today;
+  }
+
+  if (apiKey) {
+    document.getElementById('api-key-input').value = apiKey;
+    document.getElementById('api-status').textContent = '✓ KEY LOADED';
+    document.getElementById('api-banner').style.background = 'rgba(26,122,74,0.08)';
+    document.getElementById('api-banner').style.borderColor = 'rgba(26,122,74,0.3)';
+  }
+
+  loadCachedData();
+  pruneAuditLog();
+  renderAuditLog();
+  updateSpendDisplay();
+  updateClock();
+  updateAutoSyncUI();
+
+  setInterval(updateClock, 1000);
+  setInterval(updateCooldownDisplays, 5000);
+  setInterval(updateSyncTimer, 60000);
+  setInterval(updateFreshnessDots, 60000);
+
+  // Midnight UTC reset check — runs every minute
+  setInterval(() => {
+    const today = new Date().toISOString().split('T')[0];
+    if (dailySpendDate !== today) {
+      dailySpend = 0;
+      localStorage.setItem('evenfall_daily_spend', '0');
+      localStorage.setItem('evenfall_daily_date', today);
+      dailySpendDate = today;
+      document.getElementById('cap-warning').style.display = 'none';
+      updateSpendDisplay();
+    }
+  }, 60 * 1000);
+
+  // Headlines auto-refresh every 5 min
+  setInterval(() => {
+    if (!autoSyncEnabled) return;
+    if (apiKey && !isDailyCapped() && canRefresh('headlines') && !document.hidden) {
+      refreshSection('headlines', true);
+    }
+  }, 5 * 60 * 1000);
+
+  // OSINT auto-refresh every 5 min
+  setInterval(() => {
+    if (!autoSyncEnabled) return;
+    if (apiKey && !isDailyCapped() && canRefresh('osint') && !document.hidden) {
+      refreshSection('osint', true);
+    }
+  }, 5 * 60 * 1000);
+
+  // True hourly sync — all sections, every 60 min, regardless of manual refresh history
+  setInterval(() => {
+    if (!autoSyncEnabled) return;
+    if (apiKey && !isDailyCapped() && !document.hidden) {
+      executeHourlySync();
+    }
+  }, 60 * 60 * 1000);
+}
+
+function loadCachedData() {
+  ALL_SECTIONS.forEach(s => {
+    const cached = localStorage.getItem(`evenfall_data_${s}`);
+    const cachedTime = localStorage.getItem(`evenfall_time_${s}`);
+    if (cached) {
+      sectionData[s] = cached;
+      lastRefresh[s] = parseInt(cachedTime) || 0;
+      renderSection(s, cached);
+      updateSectionTime(s, parseInt(cachedTime));
+    }
+  });
+  updateFreshnessDots();
+}
+
+// ─── API KEY ───
+function saveApiKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (val && val.startsWith('sk-')) {
+    apiKey = val;
+    localStorage.setItem('evenfall_apikey', val);
+    document.getElementById('api-status').textContent = '✓ KEY SAVED';
+    document.getElementById('api-banner').style.background = 'rgba(26,122,74,0.08)';
+    document.getElementById('api-banner').style.borderColor = 'rgba(26,122,74,0.3)';
+  }
+}
+
+// ─── CAP RESET MODAL ───
+function confirmResetCap() {
+  const modal = document.getElementById('cap-reset-modal');
+  modal.style.display = 'flex';
+  document.getElementById('cap-reset-input').value = '';
+  document.getElementById('cap-reset-error').style.display = 'none';
+  setTimeout(() => document.getElementById('cap-reset-input').focus(), 50);
+}
+
+function closeResetCap() {
+  document.getElementById('cap-reset-modal').style.display = 'none';
+}
+
+function submitResetCap() {
+  const val = document.getElementById('cap-reset-input').value;
+  if (val === '0001') {
+    closeResetCap();
+    resetDailyCap();
+  } else {
+    document.getElementById('cap-reset-error').style.display = 'block';
+    document.getElementById('cap-reset-input').value = '';
+    document.getElementById('cap-reset-input').focus();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const inp = document.getElementById('cap-reset-input');
+  if (inp) inp.addEventListener('keydown', e => { if (e.key === 'Enter') submitResetCap(); });
+});
+
+// ─── SPEND ───
+function resetDailyCap() {
+  const today = new Date().toISOString().split('T')[0];
+  dailySpend = 0;
+  sessionSpend = 0;
+  localStorage.setItem('evenfall_daily_spend', '0');
+  localStorage.setItem('evenfall_daily_date', today);
+  dailySpendDate = today;
+  document.getElementById('cap-warning').style.display = 'none';
+  updateSpendDisplay();
+}
+
+function isDailyCapped() {
+  return dailySpend >= DAILY_CAP;
+}
+
+function addSpend(inputTokens, outputTokens) {
+  const cost = (inputTokens / 1000 * COST_PER_1K_INPUT) + (outputTokens / 1000 * COST_PER_1K_OUTPUT);
+  sessionSpend += cost;
+  dailySpend += cost;
+  localStorage.setItem('evenfall_daily_spend', dailySpend.toFixed(5));
+  updateSpendDisplay();
+  if (isDailyCapped()) {
+    document.getElementById('cap-warning').style.display = 'block';
+  }
+  return cost;
+}
+
+function updateSpendDisplay() {
+  document.getElementById('spend-display').textContent = `$${sessionSpend.toFixed(3)}`;
+  const pct = Math.min(100, (dailySpend / DAILY_CAP) * 100);
+  document.getElementById('spend-fill').style.width = pct + '%';
+  document.getElementById('spend-fill').style.background = pct > 80 ? 'var(--accent-red)' : pct > 50 ? 'var(--accent-amber)' : 'var(--accent-blue)';
+}
+
+// ─── CLOCK ───
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getUTCHours()).padStart(2,'0');
+  const m = String(now.getUTCMinutes()).padStart(2,'0');
+  const s = String(now.getUTCSeconds()).padStart(2,'0');
+  document.getElementById('utc-clock').textContent = `${h}:${m}:${s} UTC`;
+}
+
+// ─── COOLDOWNS ───
+function canRefresh(section) {
+  const last = lastRefresh[section] || 0;
+  return (Date.now() - last) >= (COOLDOWNS[section] || 30000);
+}
+
+function updateCooldownDisplays() {
+  Object.keys(COOLDOWNS).forEach(s => {
+    const el = document.getElementById(`${s}-cooldown`);
+    const btn = document.getElementById(`${s}-btn`);
+    if (!btn) return;
+    const elapsed = Date.now() - (lastRefresh[s] || 0);
+    const remaining = COOLDOWNS[s] - elapsed;
+    if (remaining > 0) {
+      const secs = Math.ceil(remaining / 1000);
+      if (el) el.textContent = secs < 60 ? `${secs}s` : `${Math.ceil(remaining/60000)}m`;
+      btn.disabled = true;
+    } else {
+      if (el) el.textContent = '';
+      btn.disabled = false;
+    }
+  });
+  updateFreshnessDots();
+}
+
+function updateSectionTime(section, timestamp) {
+  const el = document.getElementById(`${section}-updated`);
+  if (!el || !timestamp) return;
+  const ago = Math.floor((Date.now() - timestamp) / 60000);
+  if (ago < 1) el.textContent = 'just now';
+  else if (ago < 60) el.textContent = `${ago}m ago`;
+  else el.textContent = `${Math.floor(ago/60)}h ago`;
+}
+
+function updateFreshnessDots() {
+  const sections = ['headlines','osint','actors','military','proxy','diplo','humanitarian','media','timeline','gt','leaders','strait','market','wildcard','watchlist'];
+  sections.forEach(s => {
+    const dot = document.getElementById(`fresh-${s}`);
+    if (!dot) return;
+    const ts = lastRefresh[s] || 0;
+    if (!ts) { dot.className = 'freshness-dot fresh-none'; return; }
+    const age = (Date.now() - ts) / 60000;
+    if (age < 10) dot.className = 'freshness-dot fresh-green';
+    else if (age < 30) dot.className = 'freshness-dot fresh-amber';
+    else dot.className = 'freshness-dot fresh-red';
+  });
+}
+
+// ─── HOURLY SYNC ───
+async function executeHourlySync() {
+  lastSyncTime = Date.now();
+  updateSyncTimer();
+  for (const s of ALL_SECTIONS) {
+    if (isDailyCapped()) break;
+    await refreshSection(s, true);
+    await sleep(500);
+  }
+}
+
+function updateSyncTimer() {
+  const el = document.getElementById('sync-timer');
+  if (!el) return;
+  if (!lastSyncTime) { el.textContent = '—'; return; }
+  const elapsed = Math.floor((Date.now() - lastSyncTime) / 60000);
+  if (elapsed < 1) el.textContent = 'just now';
+  else if (elapsed < 60) el.textContent = elapsed + 'm ago';
+  else el.textContent = Math.floor(elapsed / 60) + 'h ago';
+}
+
+// ─── CONFIRM MODAL ───
+function confirmRefreshAll() {
+  if (isDailyCapped()) return;
+  document.getElementById('confirm-body').textContent = 'This will refresh all 15 sections simultaneously.';
+  document.getElementById('confirm-cost').textContent = '~$0.40–0.55 estimated cost';
+  document.getElementById('confirm-modal').style.display = 'flex';
+  confirmCallback = () => { closeConfirm(); executeRefreshAll(); };
+  document.getElementById('confirm-yes-btn').onclick = confirmCallback;
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-modal').style.display = 'none';
+}
+
+async function executeRefreshAll() {
+  lastSyncTime = Date.now();
+  updateSyncTimer();
+  for (const s of ALL_SECTIONS) {
+    if (isDailyCapped()) break;
+    await refreshSection(s, true);
+    await sleep(800);
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ─── SECTION PROMPTS ───
+const SECTION_PROMPTS = {
+
+headlines: `Search for recent news reports from Reuters, AP, BBC, CNN, Al Jazeera English about Iran, Israel, and the United States. Find the 5-7 most recent published articles or wire reports. For each one extract: the time it was published (in UTC), a 1-2 sentence summary, and the source outlet.
+
+Output ONLY a raw JSON array. Start immediately with [, no other text before it:
+[{"time":"HH:MM","text":"one factual sentence summarizing what was reported","status":"CONFIRMED","source":"outlet name"}]
+Use 24-hour HH:MM UTC for time. If time unknown use 00:00. Newest first.`,
+
+osint: `Search for the most recent posts and reports from these OSINT accounts and channels: OSINTdefender (sentdefender on Twitter/X), IntelCrab, WarMonitor, Manni Fabian. Search for "sentdefender" "IntelCrab" "OSINTdefender" site:twitter.com OR site:x.com to find recent posts. Also search for recent OSINT reports about Iran Israel US military activity from these accounts.
+
+Summarize 6-8 of the most significant recent signals you find. Each should be a distinct military or intelligence development not covered by mainstream wire services.
+
+Output ONLY a raw JSON array. Start immediately with [, no other text before it:
+[{"channel":"account name","time":"HH:MM","text":"what was reported in plain English","confidence":"SIGNAL|WATCH|UNVERIFIED","lang":"EN"}]
+Times in 24-hour HH:MM UTC, use 00:00 if unknown. Newest first.`,
+
+actors: `Search for the current military and diplomatic posture of the United States, Israel, Iran, Russia, China, and Gulf States regarding any active or recent military conflict or tensions between Iran, the US, and Israel. Find the most recent confirmed actions and likely next moves for each.
+
+Output ONLY raw JSON. Begin your response with { or [. Zero preamble, zero explanation, no markdown:
+{"escalation":7.5,"actors":[
+{"name":"UNITED STATES","role":"Primary Attacker","posture":"OFFENSIVE","lastAction":"most recent factual action","nextLikely":"assessed next move"},
+{"name":"ISRAEL","role":"Primary Attacker","posture":"OFFENSIVE","lastAction":"...","nextLikely":"..."},
+{"name":"IRAN","role":"Defender/Retaliating","posture":"RETALIATING","lastAction":"...","nextLikely":"..."},
+{"name":"RUSSIA","role":"Geopolitical Actor","posture":"MONITORING","lastAction":"...","nextLikely":"..."},
+{"name":"CHINA","role":"Geopolitical Actor","posture":"MONITORING","lastAction":"...","nextLikely":"..."},
+{"name":"GULF STATES","role":"Caught in Crossfire","posture":"DEFENSIVE","lastAction":"...","nextLikely":"..."}
+]}
+escalation is 0-10 float. posture: OFFENSIVE|DEFENSIVE|RETALIATING|MONITORING|UNKNOWN. All values plain text strings.`,
+
+military: `Search for the latest military operations involving the United States, Israel, and Iran — airstrikes, missile launches, naval movements, intercepts, and special operations.
+
+CRITICAL: Your response must begin with { and contain ONLY valid JSON. No preamble, no explanation, no markdown fences. Start your response with the opening brace.
+
+{"offensive":[{"type":"US/ISRAEL","target":"location","method":"weapon","status":"CONFIRMED|UNCONFIRMED","note":"detail"}],
+"retaliation":[{"actor":"IRAN","target":"location","weapon":"type","result":"outcome","status":"CONFIRMED|UNCONFIRMED"}],
+"defensive":[{"type":"INTERCEPT","action":"what was intercepted","result":"outcome","status":"CONFIRMED|UNCONFIRMED"}],
+"assets":{"us_carriers":"status","iran_missile_sites":"status","iran_nuclear_sites":"status","us_bases_affected":"status"}}`,
+
+proxy: `Search for the current activity level of Iran-aligned proxy forces — Houthis in Yemen, Hezbollah in Lebanon, Iraqi Shia militias, and Hamas in Gaza — in response to any US-Israel-Iran tensions or conflict.
+
+Output ONLY a raw JSON array. Begin your response with [ and end with ]. Zero preamble, zero explanation, no markdown:
+[{"name":"HOUTHIS","activity":"HIGH|MEDIUM|LOW|UNKNOWN","description":"current posture","latestAction":"most recent reported action","threatLevel":"brief threat assessment"},
+{"name":"HEZBOLLAH","activity":"...","description":"...","latestAction":"...","threatLevel":"..."},
+{"name":"IRAQI MILITIAS","activity":"...","description":"...","latestAction":"...","threatLevel":"..."},
+{"name":"HAMAS","activity":"...","description":"...","latestAction":"...","threatLevel":"..."}]`,
+
+diplo: `Search for the current diplomatic positions and official statements from major world powers regarding US-Israel military actions against Iran. Find recent statements from the EU, Russia, China, Turkey, Gulf states, UK, France, Germany, India, and the UN Security Council.
+
+Output ONLY a raw JSON array. Begin your response with [ and end with ]. Zero preamble, zero explanation, no markdown:
+[{"country":"EU","stance":"AGAINST|NEUTRAL|SUPPORT|WATCHING","note":"specific position or statement"},
+{"country":"Russia","stance":"...","note":"..."},
+{"country":"China","stance":"...","note":"..."},
+{"country":"Turkey","stance":"...","note":"..."},
+{"country":"Saudi Arabia","stance":"...","note":"..."},
+{"country":"Qatar","stance":"...","note":"..."},
+{"country":"UAE","stance":"...","note":"..."},
+{"country":"Jordan","stance":"...","note":"..."},
+{"country":"UK","stance":"...","note":"..."},
+{"country":"France","stance":"...","note":"..."},
+{"country":"Germany","stance":"...","note":"..."},
+{"country":"India","stance":"...","note":"..."},
+{"country":"UN Security Council","stance":"...","note":"..."}]`,
+
+humanitarian: `Search for the latest casualty figures and humanitarian impact from any military conflict or airstrikes involving Iran, Israel, and the United States.
+
+Output ONLY raw JSON. Begin your response with { or [. Zero preamble, zero explanation, no markdown:
+{"iranCasualties":{"value":"number or range or unknown","qualifier":"CONFIRMED|ESTIMATED|REPORTED"},
+"israelCasualties":{"value":"...","qualifier":"..."},
+"usCasualties":{"value":"...","qualifier":"..."},
+"displaced":{"value":"...","qualifier":"..."},
+"civilianInfrastructure":["item1","item2","item3"],
+"context":"2 sentences on current humanitarian situation"}`,
+
+media: `Search for how major media outlets are currently framing any US-Israel-Iran conflict or tensions — compare Western mainstream media, Iranian state media (IRNA, Press TV), and Gulf/Al Jazeera coverage.
+
+Output ONLY raw JSON. Begin your response with { or [. Zero preamble, zero explanation, no markdown:
+{"western":{"label":"WESTERN MEDIA","points":["framing point 1","point 2","point 3"]},
+"iranian":{"label":"IRANIAN STATE MEDIA","points":["point 1","point 2","point 3"]},
+"gulf":{"label":"GULF / AL JAZEERA","points":["point 1","point 2","point 3"]}}`,
+
+timeline: `Search for the chronological sequence of major events in the current US-Israel-Iran conflict — from the earliest triggering events through the most recent developments. Include diplomatic failures, military strikes, retaliatory actions, and key turning points.
+
+Output ONLY a raw JSON array of 12-15 items oldest-first. Begin your response with [. Zero preamble, no markdown:
+[{"date":"Month Year or specific date","event":"brief title","detail":"1 sentence context","significance":"HIGH|MEDIUM|LOW"},...]`,
+
+gt: `Based on the current state of US-Israel-Iran conflict and tensions, conduct a game theory analysis of each major actor's strategic position. What is each party's dominant strategy given their payoff matrix, constraints, and likely opponent moves?
+
+Output ONLY raw JSON. Begin your response with { or [. Zero preamble, zero explanation, no markdown:
+{"actors":[
+{"name":"UNITED STATES","dominantStrategy":"core strategy","logic":"2 sentences of game theory reasoning about payoffs and constraints","rationalNextMove":"most rational next action"},
+{"name":"ISRAEL","dominantStrategy":"...","logic":"...","rationalNextMove":"..."},
+{"name":"IRAN","dominantStrategy":"...","logic":"...","rationalNextMove":"..."},
+{"name":"RUSSIA","dominantStrategy":"...","logic":"...","rationalNextMove":"..."},
+{"name":"CHINA","dominantStrategy":"...","logic":"...","rationalNextMove":"..."}],
+"equilibrium":"1-2 sentences on current Nash equilibrium or most likely stable outcome",
+"keyUncertainty":"the single most important unknown variable that could change the entire strategic calculus"}`,
+
+leaders: `Search for the current confirmed status and latest public activity of key leadership figures: Ali Khamenei (Supreme Leader Iran), Masoud Pezeshkian (President Iran), Benjamin Netanyahu (PM Israel), Donald Trump (President USA), IRGC leadership, and IDF command. Any confirmed deaths, injuries, or location changes?
+
+Output ONLY a raw JSON array. Begin your response with [ and end with ]. Zero preamble, zero explanation, no markdown:
+[{"name":"Ali Khamenei","title":"Supreme Leader Iran","status":"ACTIVE|UNKNOWN|DEAD|UNCONFIRMED-DEAD","note":"latest confirmed information"},
+{"name":"Masoud Pezeshkian","title":"President Iran","status":"...","note":"..."},
+{"name":"Benjamin Netanyahu","title":"PM Israel","status":"...","note":"..."},
+{"name":"Donald Trump","title":"President USA","status":"...","note":"..."},
+{"name":"IRGC Command","title":"Iran Revolutionary Guard","status":"...","note":"..."},
+{"name":"IDF Command","title":"Israel Defense Forces","status":"...","note":"..."}]`,
+
+strait: `Search for the current status of the Strait of Hormuz — any Iranian threats to close it, naval incidents, shipping disruptions, or military presence changes.
+
+Output ONLY raw JSON. Begin your response with { or [. Zero preamble, zero explanation, no markdown:
+{"status":"OPEN|THREATENED|CLOSED","context":"2-3 sentences on current situation and any threats","oilImpact":"brief note on oil market impact","shippingStatus":"current commercial shipping situation"}`,
+
+market: `Search for current market prices and how they are being affected by US-Israel-Iran tensions or conflict: Brent crude oil, natural gas, gold, US defense sector ETFs, and the VIX volatility index.
+
+Output ONLY raw JSON. Begin your response with { or [. Zero preamble, zero explanation, no markdown:
+{"oil":{"name":"Brent Crude","price":"$XX.XX","change":"+X.X%","note":"brief context"},
+"gas":{"name":"Nat Gas","price":"$X.XX","change":"...","note":"..."},
+"gold":{"name":"Gold","price":"$XXXX","change":"...","note":"safe haven"},
+"defenseSector":{"name":"Defense ETF ITA","price":"...","change":"...","note":"..."},
+"vix":{"name":"VIX","price":"...","change":"...","note":"fear index"},
+"context":"1 sentence on overall market reaction to geopolitical situation"}`,
+
+wildcard: `Based on the current US-Israel-Iran conflict situation, what are the top 5 black swan or wildcard risks that could dramatically escalate or change the conflict? Consider nuclear options, third-party interventions, domestic political crises, infrastructure attacks, and regional spillover.
+
+Output ONLY a raw JSON array of 5 items. Begin your response with [. Zero preamble, no markdown:
+[{"title":"risk name","probability":"X%","impact":"CRITICAL|HIGH","description":"1-2 sentences on why this matters and current warning signals"},...]`,
+
+watchlist: `Based on current US-Israel-Iran tensions and conflict dynamics, what are the specific tripwires and observable signals that would indicate the next major escalation step is about to happen?
+
+Output ONLY a raw JSON array of 6-8 items. Begin your response with [. Zero preamble, no markdown:
+[{"trigger":"specific observable event or signal","significance":"why this matters and what it would mean"},...]`
+};
+
+// ─── STRIP CITE TAGS ───
+function stripCiteTags(str) {
+  if (!str) return str;
+  return String(str).replace(/<cite[^>]*>|<\/cite>/gi, '').trim();
+}
+
+function cleanJSON(obj) {
+  if (typeof obj === 'string') return stripCiteTags(obj);
+  if (Array.isArray(obj)) return obj.map(cleanJSON);
+  if (obj && typeof obj === 'object') {
+    const out = {};
+    for (const k in obj) out[k] = cleanJSON(obj[k]);
+    return out;
+  }
+  return obj;
+}
+
+// ─── MAIN REFRESH FUNCTION ───
+async function refreshSection(section, silent = false) {
+  if (!apiKey) {
+    if (!silent) alert('Please enter your Anthropic API key first.');
+    return;
+  }
+  if (isDailyCapped()) {
+    document.getElementById('cap-warning').style.display = 'block';
+    return;
+  }
+  if (!canRefresh(section) && !silent) return;
+
+  // Mark refresh time immediately (spam guard)
+  lastRefresh[section] = Date.now();
+
+  const btn = document.getElementById(`${section}-btn`);
+  const loading = document.getElementById(`${section}-loading`);
+  const content = document.getElementById(`${section}-content`);
+
+  if (btn) btn.disabled = true;
+  if (loading) loading.style.display = 'block';
+  if (content) content.style.opacity = '0.3';
+
+  try {
+    const response = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'web-search-2025-03-05'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: MAX_TOKENS[section] || 800,
+        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 4 }],
+        messages: [{ role: 'user', content: SECTION_PROMPTS[section] }]
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.error) throw new Error(data.error.message || 'API error');
+
+    let cost = 0;
+    if (data.usage) cost = addSpend(data.usage.input_tokens || 0, data.usage.output_tokens || 0);
+
+    let rawText = '';
+    if (data.content) {
+      for (const block of data.content) {
+        if (block.type === 'text') rawText += block.text;
+      }
+    }
+
+    // Strip cite tags and clean BEFORE attempting JSON parse
+    rawText = rawText.replace(/<cite[^>]*>|<\/cite>/gi, '').trim();
+
+    const parsed = extractJSON(rawText);
+    if (parsed) {
+      const cleaned = cleanJSON(parsed);
+      const jsonStr = JSON.stringify(cleaned);
+      sectionData[section] = jsonStr;
+      localStorage.setItem(`evenfall_data_${section}`, jsonStr);
+      localStorage.setItem(`evenfall_time_${section}`, Date.now().toString());
+      lastRefresh[section] = Date.now();
+      renderSection(section, jsonStr);
+      updateSectionTime(section, Date.now());
+      updateFreshnessDots();
+      addAuditEntry(section, data.usage?.input_tokens||0, data.usage?.output_tokens||0, cost);
+    } else {
+      // Detect truncation vs refusal
+      const isRefusal = rawText.length > 20 && !rawText.includes('{') && !rawText.includes('[');
+      const isTruncated = rawText.includes('{') || rawText.includes('[');
+      const label = isRefusal ? '⚠ MODEL REFUSED — Try refreshing' : isTruncated ? '⚠ TRUNCATED — Retrying...' : '⚠ PARSE ERROR';
+      if (content) content.innerHTML = `<div style="padding:12px 16px;font-family:var(--mono);font-size:12px;color:var(--accent-amber-bright)">${label}<br><span style="color:var(--text-dim);font-size:10px">${esc(rawText.substring(0,200))}...</span></div>`;
+      addAuditError(section, isRefusal ? 'refusal' : 'truncated/parse');
+      // Auto-retry once if truncated
+      if (isTruncated && !silent) {
+        setTimeout(() => refreshSection(section, true), 3000);
+      }
+    }
+
+  } catch (err) {
+    if (content) content.innerHTML = `<div style="padding:12px 16px;font-family:var(--mono);font-size:13px;color:var(--signal)">⚠ ERROR: ${esc(err.message)}</div>`;
+    addAuditError(section, err.message);
+  } finally {
+    if (loading) loading.style.display = 'none';
+    if (content) content.style.opacity = '1';
+    updateCooldownDisplays();
+  }
+}
+
+function extractJSON(text) {
+  // Strip markdown fences
+  let cleaned = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+
+  // Try direct parse first
+  try { return JSON.parse(cleaned); } catch {}
+
+  // Find the FIRST occurrence of { or [ and try from there
+  const firstBrace = cleaned.indexOf('{');
+  const firstBracket = cleaned.indexOf('[');
+
+  let candidates = [];
+
+  if (firstBracket !== -1 && (firstBracket < firstBrace || firstBrace === -1)) {
+    // Likely an array — find matching ]
+    const lastBracket = cleaned.lastIndexOf(']');
+    if (lastBracket > firstBracket) {
+      candidates.push(cleaned.substring(firstBracket, lastBracket + 1));
+    }
+  }
+
+  if (firstBrace !== -1) {
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (lastBrace > firstBrace) {
+      candidates.push(cleaned.substring(firstBrace, lastBrace + 1));
+    }
+  }
+
+  for (const c of candidates) {
+    try { return JSON.parse(c); } catch {}
+  }
+
+  // Last resort: regex extraction
+  const arrMatch = cleaned.match(/\[[\s\S]*\]/);
+  const objMatch = cleaned.match(/\{[\s\S]*\}/);
+  try { if (arrMatch) return JSON.parse(arrMatch[0]); } catch {}
+  try { if (objMatch) return JSON.parse(objMatch[0]); } catch {}
+
+  return null;
+}
+
+// ─── RENDER FUNCTIONS ───
+function renderSection(section, jsonStr) {
+  try {
+    const data = JSON.parse(jsonStr);
+    const el = document.getElementById(`${section}-content`);
+    if (!el) return;
+
+    switch(section) {
+      case 'headlines': el.innerHTML = renderHeadlines(data); break;
+      case 'osint':     el.innerHTML = renderOsint(data); break;
+      case 'actors':    el.innerHTML = renderActors(data); break;
+      case 'military':  el.innerHTML = renderMilitary(data); break;
+      case 'proxy':     el.innerHTML = renderProxy(data); break;
+      case 'diplo':     el.innerHTML = renderDiplo(data); break;
+      case 'humanitarian': el.innerHTML = renderHumanitarian(data); break;
+      case 'media':     el.innerHTML = renderMedia(data); break;
+      case 'timeline':  el.innerHTML = renderTimeline(data); break;
+      case 'gt':        el.innerHTML = renderGameTheory(data); break;
+      case 'leaders':   el.innerHTML = renderLeaders(data); break;
+      case 'strait':    el.innerHTML = renderStrait(data); break;
+      case 'market':    el.innerHTML = renderMarket(data); break;
+      case 'wildcard':  el.innerHTML = renderWildcard(data); break;
+      case 'watchlist': el.innerHTML = renderWatchlist(data); break;
+    }
+  } catch(e) {
+    console.error('Render error', section, e);
+  }
+}
+
+// ── Normalize and sort time strings (HH:MM UTC) newest-first ──
+function sortByTime(arr) {
+  return [...arr].sort((a, b) => {
+    const ta = normalizeTime(a.time || '');
+    const tb = normalizeTime(b.time || '');
+    return tb.localeCompare(ta); // descending = newest first
+  });
+}
+
+function normalizeTime(t) {
+  // Extract HH:MM from various formats, return as sortable string
+  const match = t.match(/(\d{1,2}):(\d{2})/);
+  if (match) {
+    return String(parseInt(match[1])).padStart(2,'0') + ':' + match[2];
+  }
+  return '00:00';
+}
+
+function formatTime(t) {
+  const match = t.match(/(\d{1,2}):(\d{2})/);
+  if (match) {
+    return String(parseInt(match[1])).padStart(2,'0') + ':' + match[2] + ' UTC';
+  }
+  return t || '—';
+}
+
+function renderHeadlines(data) {
+  if (!Array.isArray(data)) return '<div class="empty-state">No data</div>';
+  const sorted = sortByTime(data);
+  const badgeMap = { CONFIRMED: 'badge-confirmed', DEVELOPING: 'badge-developing', UNCONFIRMED: 'badge-unconfirmed' };
+  return `<ul class="headline-list">${sorted.map(h => {
+    const badgeClass = badgeMap[h.status] || 'badge-unconfirmed';
+    return `<li class="headline-item">
+      <div class="headline-item-top">
+        <span class="headline-badge ${badgeClass}">${esc(h.status)}</span>
+        <span class="headline-time">${esc(formatTime(h.time))}</span>
+        <span class="headline-source">${esc(h.source||'')}</span>
+      </div>
+      <div class="headline-text">${esc(h.text)}</div>
+    </li>`;
+  }).join('')}</ul>`;
+}
+
+function renderOsint(data) {
+  if (!Array.isArray(data)) return '<div class="empty-state">No data</div>';
+  const sorted = sortByTime(data);
+  const confidenceMap = { SIGNAL: 'osint-badge-signal', WATCH: 'osint-badge-watch', UNVERIFIED: 'osint-badge-unverified' };
+  return `<ul class="osint-list">${sorted.map(s => {
+    const badgeClass = confidenceMap[s.confidence] || 'osint-badge-unverified';
+    const langTag = s.lang && s.lang !== 'EN' ? ` <span style="color:var(--osint-dim);font-size:11px">[${esc(s.lang)}→EN]</span>` : '';
+    return `<li class="osint-item">
+      <div class="osint-item-top">
+        <span class="osint-channel">${esc(s.channel||'OSINT')}</span>
+        <span class="osint-time">${esc(formatTime(s.time))}</span>
+        <span class="osint-badge ${badgeClass}">${esc(s.confidence)}</span>
+      </div>
+      <div class="osint-text">${esc(s.text)}${langTag}</div>
+    </li>`;
+  }).join('')}</ul>`;
+}
+
+function renderActors(data) {
+  if (!data || !data.actors) return '<div class="empty-state">No data</div>';
+
+  if (data.escalation) {
+    const pct = (data.escalation / 10) * 100;
+    document.getElementById('escalation-fill').style.width = pct + '%';
+    document.getElementById('escalation-text').textContent = `${data.escalation} / 10`;
+  }
+
+  const postureClass = p => {
+    const map = { OFFENSIVE:'posture-offensive', DEFENSIVE:'posture-defensive', RETALIATING:'posture-retaliating', MONITORING:'posture-monitoring' };
+    return map[p] || 'posture-unknown';
+  };
+
+  const actorsHtml = data.actors.map(a => `
+    <div class="actor-card">
+      <div class="actor-name">${esc(a.name)}</div>
+      <div class="actor-role">${esc(a.role)}</div>
+      <div class="actor-posture ${postureClass(a.posture)}">${esc(a.posture)}</div>
+      <div class="actor-label">LAST CONFIRMED ACTION</div>
+      <div class="actor-last-action">${esc(a.lastAction)}</div>
+      <div class="actor-label" style="margin-top:5px">LIKELY NEXT</div>
+      <div class="actor-last-action" style="color:var(--unconfirmed)">${esc(a.nextLikely)}</div>
+    </div>`).join('');
+
+  return `<div class="actors-grid">${actorsHtml}</div>`;
+}
+
+function renderMilitary(data) {
+  if (!data) return '<div class="empty-state">No data</div>';
+  const renderItems = (arr, dotClass) => (arr||[]).map(item => {
+    const text = item.target
+      ? `<strong>${esc(item.type||item.actor||'')}</strong> → ${esc(item.target||item.action||'')} — ${esc(item.method||item.result||'')}`
+      : `<strong>${esc(item.type||item.actor||'')}</strong> ${esc(item.action||item.result||'')}`;
+    const badge = item.status === 'CONFIRMED' ? 'badge-confirmed' : 'badge-unconfirmed';
+    return `<div class="strike-item"><div class="strike-dot ${dotClass}"></div><div class="strike-text">${text} <span class="headline-badge ${badge}" style="font-size:9px;padding:1px 4px">${esc(item.status||'')}</span></div></div>`;
+  }).join('');
+
+  const assets = data.assets || {};
+  return `<div class="military-grid">
+    <div class="military-card">
+      <div class="military-card-title">OFFENSIVE STRIKES</div>
+      ${renderItems(data.offensive, 'dot-red')}
+    </div>
+    <div class="military-card">
+      <div class="military-card-title">IRANIAN RETALIATION</div>
+      ${renderItems(data.retaliation, 'dot-amber')}
+    </div>
+    <div class="military-card">
+      <div class="military-card-title">AIR DEFENSE / INTERCEPTS</div>
+      ${renderItems(data.defensive, 'dot-green')}
+    </div>
+    <div class="military-card">
+      <div class="military-card-title">KEY ASSETS STATUS</div>
+      ${Object.entries(assets).map(([k,v]) => `<div class="strike-item"><div class="strike-dot dot-blue"></div><div class="strike-text"><strong>${esc(k.replace(/_/g,' ').toUpperCase())}</strong>: ${esc(v)}</div></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function renderProxy(data) {
+  if (!Array.isArray(data)) return '<div class="empty-state">No data</div>';
+  const activityClass = a => ({ HIGH:'activity-high', MEDIUM:'activity-medium', LOW:'activity-low' }[a] || 'activity-unknown');
+  return `<div class="proxy-grid">${data.map(p => `
+    <div class="proxy-card">
+      <div class="proxy-name">${esc(p.name)}</div>
+      <div class="proxy-status-line">
+        <span class="proxy-activity ${activityClass(p.activity)}">${esc(p.activity)}</span>
+      </div>
+      <div class="proxy-desc">${esc(p.description)}</div>
+      <div class="actor-label" style="margin-top:6px">LATEST</div>
+      <div class="proxy-desc">${esc(p.latestAction)}</div>
+    </div>`).join('')}</div>`;
+}
+
+function renderDiplo(data) {
+  if (!Array.isArray(data)) return '<div class="empty-state">No data</div>';
+  const stanceClass = s => ({ AGAINST:'stance-against', NEUTRAL:'stance-neutral', SUPPORT:'stance-support', WATCHING:'stance-watching' }[s] || 'stance-neutral');
+  return `<div class="diplo-grid">${data.map(d => `
+    <div class="diplo-card">
+      <div class="diplo-country">${esc(d.country)}</div>
+      <div class="diplo-stance ${stanceClass(d.stance)}">${esc(d.stance)}</div>
+      <div class="diplo-note">${esc(d.note)}</div>
+    </div>`).join('')}</div>`;
+}
+
+function renderHumanitarian(data) {
+  if (!data) return '<div class="empty-state">No data</div>';
+  const qClass = q => q === 'CONFIRMED' ? 'conf' : q === 'ESTIMATED' ? 'unc' : 'sig';
+  const stats = [
+    { label: 'IRAN CASUALTIES', v: data.iranCasualties },
+    { label: 'ISRAEL CASUALTIES', v: data.israelCasualties },
+    { label: 'US CASUALTIES', v: data.usCasualties },
+    { label: 'DISPLACED', v: data.displaced }
+  ];
+  const statsHtml = `<div class="humanitarian-stats">${stats.map(s => `
+    <div class="stat-box">
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-value">${esc(s.v?.value || '—')}</div>
+      <div class="stat-qualifier">${esc(s.v?.qualifier || '')}</div>
+    </div>`).join('')}</div>`;
+  const infraHtml = data.civilianInfrastructure?.length ? `
+    <div style="padding:10px 14px; border-bottom:1px solid var(--border)">
+      <div class="actor-label" style="margin-bottom:5px">CIVILIAN INFRASTRUCTURE STRUCK</div>
+      ${data.civilianInfrastructure.map(i => `<div class="strike-item"><div class="strike-dot dot-amber"></div><div class="strike-text">${esc(i)}</div></div>`).join('')}
+    </div>` : '';
+  const contextHtml = data.context ? `<div style="padding:10px 14px;"><div class="diplo-note">${esc(data.context)}</div></div>` : '';
+  return statsHtml + infraHtml + contextHtml;
+}
+
+function renderMedia(data) {
+  if (!data) return '<div class="empty-state">No data</div>';
+  const cols = [data.western, data.iranian, data.gulf].filter(Boolean);
+  const colors = ['var(--accent-blue-bright)', 'var(--accent-red-bright)', 'var(--accent-amber-bright)'];
+  return `<div class="framing-grid">${cols.map((col, i) => `
+    <div class="framing-col">
+      <div class="framing-source" style="color:${colors[i]}">${esc(col.label)}</div>
+      ${(col.points||[]).map(p => `<div class="framing-point">${esc(p)}</div>`).join('')}
+    </div>`).join('')}</div>`;
+}
+
+function renderTimeline(data) {
+  if (!Array.isArray(data)) return '<div class="empty-state">No data</div>';
+  // Reverse so newest event is at top
+  const reversed = [...data].reverse();
+  const nodeClass = s => s === 'HIGH' ? 'node-red' : s === 'MEDIUM' ? 'node-amber' : '';
+  return `<ul class="timeline-list">${reversed.map(item => `
+    <li class="timeline-item">
+      <div class="timeline-left">
+        <span class="timeline-date">${esc(item.date)}</span>
+      </div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-node ${nodeClass(item.significance)}"></div>
+      <div class="timeline-right">
+        <div class="timeline-event">${esc(item.event)}</div>
+        <div class="timeline-detail">${esc(item.detail)}</div>
+      </div>
+    </li>`).join('')}</ul>`;
+}
+
+function renderGameTheory(data) {
+  if (!data || !data.actors) return '<div class="empty-state">No data</div>';
+  const actorsHtml = data.actors.map(a => `
+    <div class="gt-actor-block">
+      <div class="gt-actor-name">${esc(a.name)}</div>
+      <div class="gt-logic">${esc(a.logic)}</div>
+      <div class="gt-dominant">▶ DOMINANT: ${esc(a.dominantStrategy)}<br>▶ NEXT MOVE: ${esc(a.rationalNextMove)}</div>
+    </div>`).join('');
+  const footerHtml = `
+    <div style="padding:12px 16px; background:rgba(30,127,203,0.05); border-top:1px solid var(--border)">
+      <div class="actor-label" style="margin-bottom:5px;color:var(--accent-blue-bright)">EQUILIBRIUM ASSESSMENT</div>
+      <div class="gt-logic">${esc(data.equilibrium)}</div>
+      <div class="actor-label" style="margin-top:8px;margin-bottom:4px;color:var(--accent-amber-bright)">KEY UNCERTAINTY</div>
+      <div class="gt-logic" style="color:var(--accent-amber-bright)">${esc(data.keyUncertainty)}</div>
+    </div>`;
+  return `<div class="gt-content">${actorsHtml}</div>${footerHtml}`;
+}
+
+function renderLeaders(data) {
+  if (!Array.isArray(data)) return '<div class="empty-state">No data</div>';
+  const statusClass = s => ({
+    ACTIVE: 'status-active',
+    UNKNOWN: 'status-unknown',
+    DEAD: 'status-dead',
+    'UNCONFIRMED-DEAD': 'status-unconfirmed-dead'
+  }[s] || 'status-unknown');
+  return data.map(l => `
+    <div class="leader-item">
+      <div class="leader-left">
+        <div class="leader-name">${esc(l.name)}</div>
+        <div class="leader-title">${esc(l.title)}</div>
+        <div class="leader-note">${esc(l.note)}</div>
+      </div>
+      <div class="leader-status ${statusClass(l.status)}">${esc(l.status)}</div>
+    </div>`).join('');
+}
+
+function renderStrait(data) {
+  if (!data) return '<div class="empty-state">No data</div>';
+  const statusClass = { OPEN:'strait-open', THREATENED:'strait-threatened', CLOSED:'strait-closed' }[data.status] || 'strait-threatened';
+  return `<div class="strait-display">
+    <div class="strait-status-row">
+      <div class="strait-name">STRAIT OF HORMUZ</div>
+      <div class="strait-badge ${statusClass}">${esc(data.status)}</div>
+    </div>
+    <div class="strait-context">${esc(data.context)}</div>
+    ${data.oilImpact ? `<div class="actor-label" style="margin-top:8px;margin-bottom:3px">OIL IMPACT</div><div class="strait-context">${esc(data.oilImpact)}</div>` : ''}
+    ${data.shippingStatus ? `<div class="actor-label" style="margin-top:8px;margin-bottom:3px">SHIPPING STATUS</div><div class="strait-context">${esc(data.shippingStatus)}</div>` : ''}
+  </div>`;
+}
+
+function renderMarket(data) {
+  if (!data) return '<div class="empty-state">No data</div>';
+  const items = ['oil','gas','gold','defenseSector','vix'].map(k => data[k]).filter(Boolean);
+  const changeClass = c => c && c.includes('+') ? 'change-up' : c && c.includes('-') ? 'change-down' : 'change-neutral';
+  const grid = `<div class="market-grid">${items.map(m => `
+    <div class="market-item">
+      <div class="market-name">${esc(m.name)}</div>
+      <div class="market-price">${esc(m.price)}</div>
+      <div class="market-change ${changeClass(m.change)}">${esc(m.change)}</div>
+      <div class="market-note">${esc(m.note||'')}</div>
+    </div>`).join('')}</div>`;
+  const ctx = data.context ? `<div style="padding:10px 14px;border-top:1px solid var(--border)"><div class="diplo-note">${esc(data.context)}</div></div>` : '';
+  return grid + ctx;
+}
+
+function renderWildcard(data) {
+  if (!Array.isArray(data)) return '<div class="empty-state">No data</div>';
+  const impactClass = i => i === 'CRITICAL' ? 'impact-critical' : 'impact-high';
+  return `<ul class="wildcard-list">${data.map(w => `
+    <li class="wildcard-item">
+      <div class="wc-probability">${esc(w.probability)}</div>
+      <div class="wc-text">
+        <div class="wc-title">${esc(w.title)}</div>
+        <div class="wc-desc">${esc(w.description)}</div>
+      </div>
+      <div class="wc-impact ${impactClass(w.impact)}">${esc(w.impact)}</div>
+    </li>`).join('')}</ul>`;
+}
+
+function renderWatchlist(data) {
+  if (!Array.isArray(data)) return '<div class="empty-state">No data</div>';
+  return data.map(w => `
+    <div class="watchlist-item">
+      <div class="watch-icon">▶</div>
+      <div class="watch-text"><strong>${esc(w.trigger)}</strong> — ${esc(w.significance)}</div>
+    </div>`).join('');
+}
+
+// ─── UTILITY ───
+function esc(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// Init cooldown display
+updateCooldownDisplays();
+</script>
+</body>
+</html>
